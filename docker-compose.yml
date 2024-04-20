@@ -1,0 +1,103 @@
+version: '3'
+
+services:
+  elasticsearch1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
+    container_name: elasticsearch1
+    hostname: elasticsearch1
+    environment:
+      - node.name=node1
+      - cluster.name=elasticsearch-cluster
+      - discovery.seed_hosts=elasticsearch2,elasticsearch3
+      - cluster.initial_master_nodes=node1,node2,node3
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - elastic_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://elasticsearch1:9200/_cluster/health || exit 1"]
+      interval: 30s
+      retries: 10
+      timeout: 10s
+    restart: unless-stopped
+
+  elasticsearch2:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
+    container_name: elasticsearch2
+    hostname: elasticsearch2
+    environment:
+      - node.name=node2
+      - cluster.name=elasticsearch-cluster
+      - discovery.seed_hosts=elasticsearch1,elasticsearch3
+      - cluster.initial_master_nodes=node1,node2,node3
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - elastic_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://elasticsearch2:9200/_cluster/health || exit 1"]
+      interval: 30s
+      retries: 10
+      timeout: 10s
+    restart: unless-stopped
+
+  elasticsearch3:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
+    container_name: elasticsearch3
+    hostname: elasticsearch3
+    environment:
+      - node.name=node3
+      - cluster.name=elasticsearch-cluster
+      - discovery.seed_hosts=elasticsearch1,elasticsearch2
+      - cluster.initial_master_nodes=node1,node2,node3
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - elastic_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://elasticsearch3:9200/_cluster/health || exit 1"]
+      interval: 30s
+      retries: 10
+      timeout: 10s
+    restart: unless-stopped
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.2
+    container_name: kibana
+    hostname: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=["http://elasticsearch1:9200","http://elasticsearch2:9200","http://elasticsearch3:9200"]
+    ports:
+      - "5601:5601"
+    networks:
+      - elastic_network
+    depends_on:
+      elasticsearch1:
+        condition: service_healthy
+      elasticsearch2:
+        condition: service_healthy
+      elasticsearch3:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  elastic_network:
+    driver: bridge
+

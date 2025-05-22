@@ -1,0 +1,2255 @@
+# Elasticsearch Certified Engineer Exam Questions
+
+## Data Management
+
+Q1: You need to define an Elasticsearch index to store product information. The requirements are:
+- Product IDs should be searchable but not analyzed.
+- Product descriptions should be analyzed using the English analyzer.
+- The index should have 3 primary shards and 1 replica.
+
+Which of the following index definitions best meets these requirements?
+
+A)
+PUT /product_index
+{
+  "settings": {
+    "number_of_shards": 3,
+    "number_of_replicas": 1
+  },
+  "mappings": {
+    "properties": {
+      "product_id": { "type": "keyword" },
+      "description": { "type": "text", "analyzer": "standard" }
+    }
+  }
+}
+
+B)
+PUT /product_index
+{
+  "settings": {
+    "number_of_shards": 3,
+    "number_of_replicas": 1
+  },
+  "mappings": {
+    "properties": {
+      "product_id": { "type": "text" },
+      "description": { "type": "text", "analyzer": "english" }
+    }
+  }
+}
+
+C)
+PUT /product_index
+{
+  "settings": {
+    "number_of_shards": 3,
+    "number_of_replicas": 1
+  },
+  "mappings": {
+    "properties": {
+      "product_id": { "type": "keyword" },
+      "description": { "type": "text", "analyzer": "english" }
+    }
+  }
+}
+
+D)
+PUT /product_index
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 3
+  },
+  "mappings": {
+    "properties": {
+      "product_id": { "type": "keyword" },
+      "description": { "type": "text", "analyzer": "english" }
+    }
+  }
+}
+
+Q2: When defining an index for logging data, you want to ensure that fields representing hostnames are treated as exact values for filtering and aggregation, while log messages are tokenized for full-text search. Which mapping configuration is most appropriate?
+
+A)
+{
+  "mappings": {
+    "properties": {
+      "hostname": { "type": "text" },
+      "message": { "type": "keyword" }
+    }
+  }
+}
+
+B)
+{
+  "mappings": {
+    "properties": {
+      "hostname": { "type": "keyword" },
+      "message": { "type": "text" }
+    }
+  }
+}
+
+C)
+{
+  "mappings": {
+    "properties": {
+      "hostname": { "type": "text", "index": false },
+      "message": { "type": "text" }
+    }
+  }
+}
+
+D)
+{
+  "mappings": {
+    "properties": {
+      "hostname": { "type": "keyword" },
+      "message": { "type": "text", "analyzer": "whitespace" }
+    }
+  }
+}
+
+Q3: You are creating an index for storing customer feedback. You need to ensure that the `email` field is searchable for exact matches but not tokenized, and the `feedback_text` field is analyzed for full-text search. Additionally, you want to disable indexing for a `customer_ip` field to save storage, but still store it. Which mapping definition is correct?
+
+A)
+{
+  "mappings": {
+    "properties": {
+      "email": { "type": "keyword" },
+      "feedback_text": { "type": "text" },
+      "customer_ip": { "type": "ip", "index": false, "doc_values": false }
+    }
+  }
+}
+
+B)
+{
+  "mappings": {
+    "properties": {
+      "email": { "type": "text" },
+      "feedback_text": { "type": "keyword" },
+      "customer_ip": { "type": "ip", "enabled": false }
+    }
+  }
+}
+
+C)
+{
+  "mappings": {
+    "properties": {
+      "email": { "type": "keyword" },
+      "feedback_text": { "type": "text" },
+      "customer_ip": { "type": "ip", "index": false, "store": true }
+    }
+  }
+}
+
+D)
+{
+  "mappings": {
+    "properties": {
+      "email": { "type": "keyword" },
+      "feedback_text": { "type": "text" },
+      "customer_ip": { "type": "ip", "store": true, "index": "no" }
+    }
+  }
+}
+
+Q4: You are ingesting documents with varying field names, but you know that any field ending with `_ip` should be mapped as an IP address, and any string field that is not explicitly mapped should be mapped as a keyword. Which dynamic template configuration achieves this?
+
+A)
+{
+  "dynamic_templates": [
+    {
+      "ip_fields": {
+        "match_mapping_type": "string",
+        "match": "*_ip",
+        "mapping": { "type": "ip" }
+      }
+    },
+    {
+      "string_as_keyword": {
+        "match_mapping_type": "string",
+        "mapping": { "type": "keyword" }
+      }
+    }
+  ]
+}
+
+B)
+{
+  "dynamic_templates": [
+    {
+      "ip_fields": {
+        "path_match": "*_ip",
+        "mapping": { "type": "ip" }
+      }
+    },
+    {
+      "string_as_keyword": {
+        "match_mapping_type": "string",
+        "mapping": { "type": "keyword" }
+      }
+    }
+  ]
+}
+
+C)
+{
+  "dynamic_templates": [
+    {
+      "ip_fields": {
+        "match": "*_ip",
+        "mapping": { "type": "ip" }
+      }
+    },
+    {
+      "string_as_keyword": {
+        "match_mapping_type": "*",
+        "mapping": { "type": "keyword" }
+      }
+    }
+  ]
+}
+
+D)
+{
+  "dynamic_templates": [
+    {
+      "ip_fields": {
+        "match_pattern": "regex",
+        "path_match": ".*_ip$",
+        "mapping": { "type": "ip" }
+      }
+    },
+    {
+      "string_as_keyword": {
+        "match_mapping_type": "string",
+        "unmatch": "*_ip",
+        "mapping": { "type": "keyword" }
+      }
+    }
+  ]
+}
+
+Q5: You want to configure a dynamic template for an index that stores sensor data. All fields containing "temp" in their name should be mapped as `float`, and all other numeric fields should be mapped as `integer`. String fields should be disabled (not indexed). How would you define this?
+
+A)
+{
+  "dynamic_templates": [
+    {
+      "temp_fields": {
+        "match": "*temp*",
+        "match_mapping_type": "long", 
+        "mapping": { "type": "float" }
+      }
+    },
+    {
+      "numeric_fields": {
+        "match_mapping_type": "long",
+        "mapping": { "type": "integer" }
+      }
+    },
+    {
+      "string_fields": {
+        "match_mapping_type": "string",
+        "mapping": { "enabled": false }
+      }
+    }
+  ]
+}
+
+B)
+{
+  "dynamic_templates": [
+    {
+      "temp_fields": {
+        "match_pattern": "regex",
+        "match": ".*temp.*",
+        "mapping": { "type": "float" }
+      }
+    },
+    {
+      "numeric_fields": {
+        "match_mapping_type": "double", 
+        "mapping": { "type": "integer" }
+      }
+    },
+    {
+      "string_fields": {
+        "match_mapping_type": "string",
+        "mapping": { "type": "keyword", "index": false } 
+      }
+    }
+  ]
+}
+
+C)
+{
+  "dynamic_templates": [
+    {
+      "temp_fields": {
+        "match": "*temp*", 
+        "mapping": { "type": "float" }
+      }
+    },
+    {
+      "numeric_fields": {
+        "match_mapping_type": "long", 
+        "mapping": { "type": "integer" }
+      }
+    },
+    {
+      "string_fields": {
+        "match_mapping_type": "string",
+        "mapping": { "enabled": false }
+      }
+    }
+  ]
+}
+
+D)
+{
+  "dynamic_templates": [
+    {
+      "temp_fields": {
+        "match": "*temp*",
+        "match_mapping_type": "*", 
+        "mapping": { "type": "float" }
+      }
+    },
+    {
+      "other_numeric_as_integer": {
+        "match_mapping_type": "long", 
+        "mapping": { "type": "integer"}
+      }
+    },
+     {
+      "other_numeric_as_integer_double": { 
+        "match_mapping_type": "double",
+        "mapping": { "type": "integer"}
+      }
+    },
+    {
+      "string_fields": {
+        "match_mapping_type": "string",
+        "mapping": { "enabled": false }
+      }
+    }
+  ]
+}
+
+Q6: You have an index where new string fields should by default be multi-fields: one analyzed as `text` for full-text search, and one as `keyword` for aggregations and sorting. How do you configure this using dynamic templates?
+
+A)
+{
+  "dynamic_templates": [
+    {
+      "strings_as_multi_field": {
+        "match_mapping_type": "string",
+        "mapping": {
+          "type": "text",
+          "fields": {
+            "raw": { "type": "keyword" }
+          }
+        }
+      }
+    }
+  ]
+}
+
+B)
+{
+  "dynamic_templates": [
+    {
+      "strings_as_multi_field": {
+        "match": "*",
+        "mapping": {
+          "type": "text",
+          "fields": {
+            "keyword": { "type": "keyword" }
+          }
+        }
+      }
+    }
+  ]
+}
+
+C)
+{
+  "dynamic_templates": [
+    {
+      "strings_as_multi_field": {
+        "match_mapping_type": "string",
+        "mapping": {
+          "type": "keyword",
+          "fields": {
+            "analyzed": { "type": "text" }
+          }
+        }
+      }
+    }
+  ]
+}
+
+D)
+{
+  "dynamic_templates": [
+    {
+      "strings_as_multi_field": {
+        "match_mapping_type": "string",
+        "mapping": {
+          "type": "text",
+          "properties": { 
+            "keyword": { "type": "keyword" }
+          }
+        }
+      }
+    }
+  ]
+}
+
+Q7: You are managing a time-series index for security logs. The requirements for the ILM policy are:
+- After 7 days, roll over the index when it reaches 50GB or 1 million documents.
+- After 30 days, move the index to a warm phase, shrink it to 1 shard, and force merge to 1 segment.
+- After 90 days, move the index to a cold phase and make it read-only.
+- After 365 days, delete the index.
+
+Which ILM policy definition correctly implements these requirements?
+
+A)
+{
+  "policy": {
+    "phases": {
+      "hot": {
+        "actions": {
+          "rollover": { "max_size": "50gb", "max_docs": 1000000, "max_age": "7d" }
+        }
+      },
+      "warm": {
+        "min_age": "30d",
+        "actions": {
+          "shrink": { "number_of_shards": 1 },
+          "forcemerge": { "max_num_segments": 1 }
+        }
+      },
+      "cold": {
+        "min_age": "90d",
+        "actions": { "readonly": {} }
+      },
+      "delete": {
+        "min_age": "365d",
+        "actions": { "delete": {} }
+      }
+    }
+  }
+}
+
+B)
+{
+  "policy": {
+    "phases": {
+      "hot": {
+        "min_age": "0d",
+        "actions": {
+          "rollover": { "max_primary_shard_size": "50gb", "max_docs": 1000000, "max_age": "7d" }
+        }
+      },
+      "warm": {
+        "min_age": "30d",
+        "actions": {
+          "allocate": { "require": { "data": "warm" } },
+          "shrink": { "number_of_shards": 1 },
+          "forcemerge": { "max_num_segments": 1 }
+        }
+      },
+      "cold": {
+        "min_age": "90d",
+        "actions": {
+          "freeze": {}, 
+          "set_priority": { "priority": 0 }
+        }
+      },
+      "delete": {
+        "min_age": "365d",
+        "actions": { "delete": {} }
+      }
+    }
+  }
+}
+
+C)
+{
+  "policy": {
+    "phases": {
+      "hot": {
+        "actions": {
+          "rollover": { "max_size": "50gb", "max_docs": 1000000 } 
+        }
+      },
+      "warm": {
+        "min_age": "23d", 
+        "actions": {
+          "shrink": { "number_of_shards": 1 },
+          "forcemerge": { "max_num_segments": 1 }
+        }
+      },
+      "cold": {
+        "min_age": "60d", 
+        "actions": { "readonly": {} }
+      },
+      "delete": {
+        "min_age": "275d", 
+        "actions": { "delete": {} }
+      }
+    }
+  }
+}
+
+D)
+{
+  "policy": {
+    "phases": {
+      "hot": {
+        "actions": {
+          "rollover": { "max_total_shards_size": "50gb", "max_docs": 1000000, "max_age": "7d" }
+        }
+      },
+      "warm": {
+        "min_age": "30d",
+        "actions": {
+          "shrink": { "number_of_shards": 1 },
+          "forcemerge": { "max_num_segments": 1 },
+          "set_priority": { "priority": 50 }
+        }
+      },
+      "cold": {
+        "min_age": "90d",
+        "actions": {
+          "searchable_snapshot": { "snapshot_repository": "my_repo" } 
+        }
+      },
+      "delete": {
+        "min_age": "365d",
+        "actions": { "delete": {} }
+      }
+    }
+  }
+}
+
+Q8: For a metrics index, you want to implement an ILM policy with the following characteristics:
+- Indices are rolled over daily.
+- After 5 days, data is moved to a warm phase where it's allocated to nodes with `data_tier` set to `warm`. The number of replicas is reduced to 0.
+- After 60 days, indices are deleted.
+What is the correct ILM policy definition?
+
+A)
+{
+  "policy": {
+    "phases": {
+      "hot": {
+        "actions": { "rollover": { "max_age": "1d" } }
+      },
+      "warm": {
+        "min_age": "5d",
+        "actions": {
+          "allocate": { "require": { "data_tier": "warm" } },
+          "replicas": 0 
+        }
+      },
+      "delete": { "min_age": "60d", "actions": { "delete": {} } }
+    }
+  }
+}
+
+B)
+{
+  "policy": {
+    "phases": {
+      "hot": {
+        "actions": { "rollover": { "max_age": "1d" } }
+      },
+      "warm": {
+        "min_age": "5d",
+        "actions": {
+          "allocate": { "include": { "data_tier": "warm" } }, 
+          "set_priority": { "priority": 50 },
+          "set_replicas": { "number_of_replicas": 0 } 
+        }
+      },
+      "delete": { "min_age": "60d", "actions": { "delete": {} } }
+    }
+  }
+}
+
+C)
+{
+  "policy": {
+    "phases": {
+      "hot": {
+        "actions": { "rollover": { "max_age": "1d" } }
+      },
+      "warm": {
+        "min_age": "5d",
+        "actions": {
+          "allocate": { "require": { "data_tier": "warm" } },
+          "set_priority": { "priority": 50 },
+          "number_of_replicas": 0 
+        }
+      },
+      "delete": { "min_age": "60d", "actions": { "delete": {} } }
+    }
+  }
+}
+
+D)
+{
+  "policy": {
+    "phases": {
+      "hot": {
+        "actions": { "rollover": { "max_age": "1d" } }
+      },
+      "warm": {
+        "min_age": "5d",
+        "actions": {
+          "allocate": { "require": { "data_tier": "warm" } },
+          "set_priority": { "priority": 50 },
+          "set_number_of_replicas": { "count": 0 } 
+        }
+      },
+      "delete": { "min_age": "60d", "actions": { "delete": {} } }
+    }
+  }
+}
+
+Q9: Which set of actions is valid for the `frozen` phase in an ILM policy?
+A) `searchable_snapshot`, `allocate`, `delete`
+B) `wait_for_snapshot`, `mount`, `unfollow`
+C) `searchable_snapshot` (to create the frozen tier cache) and then typical actions are `delete` or moving to a different phase. The primary action *for entering* frozen is `freeze`.
+D) `freeze`, `shrink`, `forcemerge`
+
+Q10: You need to define an index template for a new data stream named `logs-my_app-prod`. This data stream should have a timestamp field `@timestamp`. Which of the following is a minimal but correct index template definition?
+
+A)
+PUT _index_template/logs_my_app_template
+{
+  "index_patterns": ["logs-my_app-prod"],
+  "data_stream": { },
+  "template": {
+    "mappings": {
+      "properties": {
+        "@timestamp": { "type": "date" }
+      }
+    }
+  }
+}
+
+B)
+PUT _index_template/logs_my_app_template
+{
+  "index_patterns": ["logs-my_app-prod*"], 
+  "data_stream": { "enabled": true }, 
+  "template": {
+    "mappings": {
+      "properties": {
+        "timestamp": { "type": "date" } 
+      }
+    }
+  }
+}
+
+C)
+PUT _component_template/logs_my_app_component 
+{
+  "template": {
+    "mappings": {
+      "properties": {
+        "@timestamp": { "type": "date" }
+      }
+    }
+  },
+  "_meta": {
+    "data_stream_template": true 
+  }
+}
+
+D)
+PUT _index_template/logs_my_app_template
+{
+  "index_patterns": ["logs-my_app-prod"],
+  "data_stream": { },
+  "composed_of": ["component_template_with_@timestamp"] 
+}
+
+Q11: What is a key characteristic that MUST be present in the mappings of an index template used for creating a data stream?
+
+A) A field named `event.timestamp` of type `date`.
+B) A field named `@timestamp` of type `date` or `date_nanos`.
+C) At least one field mapped as `keyword` for routing.
+D) The `_source` mapping must be enabled.
+
+Q12: You want to create an index template for a data stream that will store Apache access logs. The data stream will be named `logs-apache.access-production`. The template should ensure that new indices in the stream use an ILM policy named `apache_logs_policy`. How should this be configured in the template?
+
+A)
+PUT _index_template/apache_logs_template
+{
+  "index_patterns": ["logs-apache.access-production"],
+  "data_stream": {},
+  "template": {
+    "settings": {
+      "index.lifecycle.name": "apache_logs_policy",
+      "index.lifecycle.rollover_alias": "logs-apache.access-production" 
+    },
+    "mappings": { "properties": { "@timestamp": { "type": "date" } } }
+  }
+}
+
+B)
+PUT _index_template/apache_logs_template
+{
+  "index_patterns": ["logs-apache.access-production"],
+  "data_stream": {},
+  "template": {
+    "settings": {
+      "index.lifecycle.name": "apache_logs_policy"
+    },
+    "mappings": { "properties": { "@timestamp": { "type": "date" } } }
+  }
+}
+
+C)
+PUT _index_template/apache_logs_template
+{
+  "index_patterns": ["logs-apache.access-production"],
+  "data_stream": { "ilm_policy": "apache_logs_policy" }, 
+  "template": {
+    "mappings": { "properties": { "@timestamp": { "type": "date" } } }
+  }
+}
+
+D)
+PUT _index_template/apache_logs_template
+{
+  "index_patterns": ["logs-apache.access-production*"], 
+  "data_stream": {},
+  "template": {
+    "settings": {
+      "ilm.policy": "apache_logs_policy" 
+    },
+    "mappings": { "properties": { "@timestamp": { "type": "date" } } }
+  }
+}
+
+## Searching Data
+
+Q13: You want to find all documents in the `products` index where the `description` field contains the exact phrase "new and improved" OR the `name` field contains the term "ultimate". Which query should you use?
+
+A)
+GET /products/_search
+{
+  "query": {
+    "bool": {
+      "should": [
+        { "match_phrase": { "description": "new and improved" } },
+        { "match": { "name": "ultimate" } }
+      ],
+      "minimum_should_match": 1
+    }
+  }
+}
+
+B)
+GET /products/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "new and improved ultimate",
+      "fields": ["description", "name"],
+      "type": "phrase_prefix"
+    }
+  }
+}
+
+C)
+GET /products/_search
+{
+  "query": {
+    "query_string": {
+      "query": "(description:\"new and improved\") OR (name:ultimate)"
+    }
+  }
+}
+
+D)
+GET /products/_search
+{
+  "query": {
+    "simple_query_string": {
+      "query": "\"new and improved\" | ultimate",
+      "fields": ["description", "name"]
+    }
+  }
+}
+
+Q14: You need to search for documents in the `articles` index where the `title` field contains the term "elasticsearch" and the `status` field is exactly "published". The search for "elasticsearch" should allow for typos. Which query is most appropriate?
+
+A)
+GET /articles/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "match": { "title": { "query": "elasticsearch", "fuzziness": "AUTO" } } },
+        { "term": { "status.keyword": "published" } }
+      ]
+    }
+  }
+}
+
+B)
+GET /articles/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "fuzzy": { "title": "elasticsearch" } },
+        { "match": { "status": "published" } }
+      ]
+    }
+  }
+}
+
+C)
+GET /articles/_search
+{
+  "query": {
+    "bool": {
+      "filter": [
+        { "match": { "title": "elasticsearch" } },
+        { "term": { "status": "published" } }
+      ]
+    }
+  }
+}
+
+D)
+GET /articles/_search
+{
+  "query": {
+    "match": {
+      "title": "elasticsearch",
+      "status": "published" 
+    }
+  }
+}
+
+Q15: You need to find blog posts that either contain "Elasticsearch" in the `title` and are tagged with "search", OR were published after "2023-01-01". The "search" tag is in a `tags` keyword field. Which query best represents this logic?
+
+A)
+GET /blogs/_search
+{
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "bool": {
+            "must": [
+              { "match": { "title": "Elasticsearch" } },
+              { "term": { "tags": "search" } }
+            ]
+          }
+        },
+        { "range": { "publish_date": { "gt": "2023-01-01" } } }
+      ],
+      "minimum_should_match": 1
+    }
+  }
+}
+
+B)
+GET /blogs/_search
+{
+  "query": {
+    "bool": {
+      "must": [ 
+        {
+          "bool": {
+            "should": [
+              { "match": { "title": "Elasticsearch" } },
+              { "term": { "tags": "search" } }
+            ]
+          }
+        },
+        { "range": { "publish_date": { "gt": "2023-01-01" } } }
+      ]
+    }
+  }
+}
+
+C)
+GET /blogs/_search
+{
+  "query": {
+    "bool": {
+      "should": [
+        { "match": { "title": "Elasticsearch" } },
+        { "term": { "tags": "search" } },
+        { "range": { "publish_date": { "gt": "2023-01-01" } } }
+      ],
+      "minimum_should_match": 2 
+    }
+  }
+}
+
+D)
+GET /blogs/_search
+{
+  "query": {
+    "dis_max": {
+      "queries": [
+        { "match": { "title": "Elasticsearch" } },
+        { "term": { "tags": "search" } },
+        { "range": { "publish_date": { "gt": "2023-01-01" } } }
+      ]
+    }
+  }
+}
+
+Q16: You are searching for products that must be in the "electronics" category and must NOT be "out_of_stock". Additionally, these products should preferably have a `rating` greater than 4.0, but this is not a strict requirement. How would you structure this query?
+
+A)
+GET /products/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "term": { "category.keyword": "electronics" } }
+      ],
+      "must_not": [
+        { "term": { "status.keyword": "out_of_stock" } }
+      ],
+      "should": [
+        { "range": { "rating": { "gt": 4.0 } } }
+      ]
+    }
+  }
+}
+
+B)
+GET /products/_search
+{
+  "query": {
+    "bool": {
+      "filter": [
+        { "term": { "category.keyword": "electronics" } },
+        { "range": { "rating": { "gt": 4.0 } } } 
+      ],
+      "must_not": [
+        { "term": { "status.keyword": "out_of_stock" } }
+      ]
+    }
+  }
+}
+
+C)
+GET /products/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "term": { "category.keyword": "electronics" } },
+        { "range": { "rating": { "gt": 4.0 } } } 
+      ],
+      "must_not": [
+        { "term": { "status.keyword": "out_of_stock" } }
+      ]
+    }
+  }
+}
+
+D)
+GET /products/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "term": { "category.keyword": "electronics" } }
+      ],
+      "filter": [ 
+        { "bool": { "must_not": { "term": { "status.keyword": "out_of_stock" } } } }
+      ],
+      "should": [
+        { "range": { "rating": { "gt": 4.0 } } }
+      ]
+    }
+  }
+}
+
+Q17: You need to perform a complex aggregation on a very large dataset that might take several minutes to complete. You want to submit this search and retrieve the results later without blocking the client. Which is the correct endpoint and initial parameter to use?
+
+A) `POST /my-index/_async_search?keep_on_completion=true`
+B) `POST /my-index/_search?async=true`
+C) `GET /my-index/_search/async?keep_alive=5m`
+D) `POST /my-index/_search?request_cache=false&timeout=5m`
+
+Q18: After submitting an asynchronous search, you receive an ID for the search. How do you check the status of this asynchronous search and retrieve partial results if available, before it completes?
+
+A) `GET /_async_search/status/<search_id>`
+B) `GET /_search/async/<search_id>`
+C) `GET /_async_search/<search_id>`
+D) `POST /_async_search/poll/<search_id>`
+
+Q19: You want to calculate the average price (`avg_price`) and the total number of products (`product_count`) in your `products` index. Which aggregation query should you use?
+
+A)
+GET /products/_search
+{
+  "aggs": {
+    "avg_price": { "avg": { "field": "price" } },
+    "product_count": { "value_count": { "field": "_id" } }
+  }
+}
+
+B)
+GET /products/_search
+{
+  "aggs": {
+    "avg_price": { "metrics": { "avg": "price" } },
+    "product_count": { "bucket_script": { "script": "params.count" } }
+  }
+}
+
+C)
+GET /products/_search
+{
+  "aggregations": { 
+    "average_price": { "avg": { "field": "price" } },
+    "total_products": { "cardinality": { "field": "product_id.keyword" } } 
+  }
+}
+
+D)
+GET /products/_search
+{
+  "aggs": {
+    "price_stats": { "stats": { "field": "price" } }, 
+    "product_count": { "terms": { "field": "product_id.keyword" } } 
+  }
+}
+
+Q20: You want to group your `sales` documents by `product_category` and then find the maximum sale amount (`max_sale`) within each category. How do you structure this aggregation?
+
+A)
+GET /sales/_search
+{
+  "aggs": {
+    "categories": {
+      "terms": { "field": "product_category.keyword" },
+      "aggs": {
+        "max_sale": { "max": { "field": "sale_amount" } }
+      }
+    }
+  }
+}
+
+B)
+GET /sales/_search
+{
+  "aggs": {
+    "max_sale_per_category": {
+      "max_bucket": { 
+        "buckets_path": "categories>max_sale"
+      }
+    },
+    "categories": {
+      "terms": { "field": "product_category.keyword" }
+    }
+  }
+}
+
+C)
+GET /sales/_search
+{
+  "aggs": {
+    "categories": {
+      "histogram": { "field": "product_category.keyword", "interval": 1 }, 
+      "aggs": {
+        "max_sale": { "max": { "field": "sale_amount" } }
+      }
+    }
+  }
+}
+
+D)
+GET /sales/_search
+{
+  "aggs": {
+    "max_sale": { "max": { "field": "sale_amount" } },
+    "group_by_category": { "terms": { "field": "product_category.keyword" } } 
+  }
+}
+
+Q21: In your `website_logs` index, you want to first group logs by `country_code.keyword`, then within each country, group by `browser.name.keyword`, and finally, calculate the average `response_time_ms` for each browser within each country. What is the correct aggregation structure?
+
+A)
+GET /website_logs/_search
+{
+  "aggs": {
+    "by_country": {
+      "terms": { "field": "country_code.keyword" },
+      "aggs": {
+        "by_browser": {
+          "terms": { "field": "browser.name.keyword" },
+          "aggs": {
+            "avg_response_time": { "avg": { "field": "response_time_ms" } }
+          }
+        }
+      }
+    }
+  }
+}
+
+B)
+GET /website_logs/_search
+{
+  "aggs": {
+    "by_country_and_browser": {
+      "multi_terms": { 
+        "terms": [
+          { "field": "country_code.keyword" },
+          { "field": "browser.name.keyword" }
+        ]
+      },
+      "aggs": {
+        "avg_response_time": { "avg": { "field": "response_time_ms" } }
+      }
+    }
+  }
+}
+
+C)
+GET /website_logs/_search
+{
+  "aggs": {
+    "avg_response_time": { "avg": { "field": "response_time_ms" } }, 
+    "by_country": {
+      "terms": { "field": "country_code.keyword" },
+      "aggs": {
+        "by_browser": {
+          "terms": { "field": "browser.name.keyword" }
+        }
+      }
+    }
+  }
+}
+
+D)
+GET /website_logs/_search
+{
+  "aggs": {
+    "by_country": {
+      "terms": { "field": "country_code.keyword" }
+    },
+    "by_browser": { 
+      "terms": { "field": "browser.name.keyword" },
+      "aggs": {
+        "avg_response_time": { "avg": { "field": "response_time_ms" } }
+      }
+    }
+  }
+}
+
+Q22: You want to find the top 5 product categories by sales revenue (`total_revenue` from sum of `order_item.price`). Within these top categories, you also want to see the number of unique customers (`unique_customers` from cardinality of `customer_id.keyword`). Which aggregation setup is correct?
+
+A)
+GET /sales/_search
+{
+  "aggs": {
+    "top_categories_by_revenue": {
+      "terms": {
+        "field": "category.keyword",
+        "size": 5,
+        "order": { "total_category_revenue": "desc" }
+      },
+      "aggs": {
+        "total_category_revenue": { "sum": { "field": "order_item.price" } },
+        "unique_customers": { "cardinality": { "field": "customer_id.keyword" } }
+      }
+    }
+  }
+}
+
+B)
+GET /sales/_search
+{
+  "aggs": {
+    "top_categories_by_revenue": {
+      "terms": { "field": "category.keyword", "size": 5 },
+      "aggs": {
+        "total_category_revenue": { "sum": { "field": "order_item.price" } },
+        "order": { "_key" : "desc" } 
+      },
+      "aggs": { 
+         "unique_customers": { "cardinality": { "field": "customer_id.keyword" } }
+      }
+    }
+  }
+}
+
+C)
+GET /sales/_search
+{
+  "aggs": {
+    "top_categories_by_revenue": {
+      "terms": {
+        "field": "category.keyword",
+        "size": 5,
+        "order": { "_count": "desc" } 
+      },
+      "aggs": {
+        "total_category_revenue": { "sum": { "field": "order_item.price" } },
+        "unique_customers": { "cardinality": { "field": "customer_id.keyword" } }
+      }
+    }
+  }
+}
+
+D)
+GET /sales/_search
+{
+  "aggs": {
+    "total_category_revenue": { "sum": { "field": "order_item.price" } }, 
+    "unique_customers": { "cardinality": { "field": "customer_id.keyword" } }, 
+    "top_categories_by_revenue": {
+      "terms": {
+        "field": "category.keyword",
+        "size": 5,
+        "order": { "total_category_revenue": "desc" } 
+      }
+    }
+  }
+}
+
+Q23: You have two Elasticsearch clusters, `cluster_one` and `cluster_two`, registered in your current cluster's remote cluster settings. You want to search for documents where the `message` field contains "error" in the `logs-*` indices on both clusters. Which is the correct way to specify the target indices?
+
+A) `GET /cluster_one:logs-*,cluster_two:logs-*/_search`
+B) `GET /_search?clusters=cluster_one,cluster_two&indices=logs-*`
+C) `GET /logs-*/_search?remote_clusters=cluster_one,cluster_two`
+D) `GET /_all/_search?cluster_names=cluster_one:logs-*,cluster_two:logs-*`
+
+Q24: When performing a cross-cluster search, what configuration is essential on the querying cluster?
+
+A) The `transport.host` setting must be configured to include all remote cluster nodes.
+B) An index template matching the remote index patterns must exist locally.
+C) The remote clusters must be registered in the querying cluster's settings using `cluster.remote`.
+D) The `action.remote.search` setting must be enabled in `elasticsearch.yml`.
+
+Q25: You have an index `documents` with a `created_at` date field. You want to search for documents created on a Monday, without reindexing. You define a runtime field `day_of_week` in your query. How would you use this runtime field to filter documents?
+(Assume `emit(doc['created_at'].value.getDayOfWeek())` is the script for `day_of_week`, where Monday is 1)
+
+A)
+GET /documents/_search
+{
+  "runtime_mappings": {
+    "day_of_week": {
+      "type": "keyword",
+      "script": "emit(doc['created_at'].value.getDayOfWeekEnum().toString())" 
+    }
+  },
+  "query": {
+    "term": { "day_of_week": "MONDAY" }
+  }
+}
+
+B)
+GET /documents/_search
+{
+  "query": {
+    "script": { 
+      "script": "doc['created_at'].value.getDayOfWeek() == 1"
+    }
+  }
+}
+
+C)
+GET /documents/_search
+{
+  "runtime_mappings": {
+    "day_of_week": {
+      "type": "integer",
+      "script": "emit(doc['created_at'].value.getDayOfWeek())" 
+    }
+  },
+  "query": {
+    "match": { "day_of_week": 1 } 
+  }
+}
+
+D)
+GET /documents/_search
+{
+  "query": {
+    "bool": {
+      "filter": {
+        "runtime_script": { 
+          "name": "day_of_week",
+          "script": "emit(doc['created_at'].value.getDayOfWeek())",
+          "value": 1
+        }
+      }
+    }
+  }
+}
+
+Q26: You want to calculate the average duration in minutes from two timestamp fields, `start_time` and `end_time`, using a runtime field called `duration_minutes`. How would you define this runtime field in the search request?
+
+A)
+GET /my_index/_search
+{
+  "runtime_mappings": {
+    "duration_minutes": {
+      "type": "long",
+      "script": "emit((doc['end_time'].value.toEpochMilli() - doc['start_time'].value.toEpochMilli()) / 60000)"
+    }
+  },
+  "aggs": {
+    "avg_duration": { "avg": { "field": "duration_minutes" } }
+  }
+}
+
+B)
+GET /my_index/_search
+{
+  "runtime_fields": { 
+    "duration_minutes": {
+      "type": "double",
+      "script_content": "doc['end_time'].value.millis - doc['start_time'].value.millis / 60000" 
+    }
+  },
+  "aggs": {
+    "avg_duration": { "avg": { "field": "duration_minutes" } }
+  }
+}
+
+C)
+GET /my_index/_search
+{
+  "script_fields": { 
+    "duration_minutes": {
+      "script": {
+        "source": "(doc['end_time'].value.millis - doc['start_time'].value.millis) / 60000"
+      }
+    }
+  },
+  "aggs": {
+    "avg_duration": { "avg": { "script": { "source": "doc.duration_minutes.value" } } } 
+  }
+}
+
+D)
+GET /my_index/_search
+{
+  "runtime_mappings": {
+    "duration_minutes": {
+      "type": "float", 
+      "script": { 
+        "source": "emit((doc['end_time'].value.toEpochMilli() - doc['start_time'].value.toEpochMilli()) / 60000.0)"
+      }
+    }
+  },
+  "aggs": {
+    "avg_duration": { "avg": { "field": "duration_minutes" } }
+  }
+}
+
+## Developing Search Applications
+
+Q27: You want to sort search results from the `products` index first by `price` in ascending order. For products with the same price, you want to sort by `rating` in descending order. Which `sort` clause is correct?
+
+A)
+{
+  "sort": [
+    { "price": "asc" },
+    { "rating": "desc" }
+  ]
+}
+
+B)
+{
+  "sort": {
+    "price": "asc",
+    "rating": "desc"
+  }
+}
+
+C)
+{
+  "sort": [
+    { "price": { "order": "asc" } },
+    { "rating": { "order": "desc" } }
+  ]
+}
+
+D)
+{
+  "sort": [
+    { "price": { "order": "asc", "mode": "avg" } }, 
+    { "rating": { "order": "desc", "mode": "max" } }
+  ]
+}
+
+Q28: You are searching for articles and want to sort them by `publish_date` in descending order. However, some articles might be missing the `publish_date`. You want these articles to appear last. How do you configure the sort?
+
+A)
+{
+  "sort": [
+    { "publish_date": { "order": "desc", "missing": "_last" } }
+  ]
+}
+
+B)
+{
+  "sort": [
+    { "publish_date": { "order": "desc", "na_policy": "last" } } 
+  ]
+}
+
+C)
+{
+  "sort": [
+    { "publish_date": "desc" },
+    { "_id": "asc" } 
+  ]
+}
+
+D)
+{
+  "sort": [
+    { "publish_date": { "order": "desc", "missing": "_first" } } 
+  ]
+}
+
+Q29: You need to sort documents based on their distance from a specific geo-point (latitude 40, longitude -70). Documents closer to this point should appear first. The location field is named `pin.location` and is a `geo_point` type. Which sort option should be used?
+
+A)
+{
+  "sort": [
+    {
+      "_geo_distance": {
+        "pin.location": { "lat": 40, "lon": -70 },
+        "order": "asc",
+        "unit": "km"
+      }
+    }
+  ]
+}
+
+B)
+{
+  "sort": [
+    {
+      "distance": { 
+        "field": "pin.location",
+        "origin": "40,-70",
+        "order": "asc"
+      }
+    }
+  ]
+}
+
+C)
+{
+  "sort": [
+    {
+      "_script": {
+        "type": "number",
+        "script": {
+          "lang": "painless",
+          "source": "doc['pin.location'].arcDistance(40,-70)" 
+        },
+        "order": "asc"
+      }
+    }
+  ]
+}
+
+D)
+{
+  "sort": [
+    { "pin.location": { "order": "asc", "geo_point": "40,-70" } } 
+  ]
+}
+
+Q30: You are implementing pagination for search results. You want to display 20 results per page. How do you request the 3rd page of results?
+
+A) `GET /my_index/_search { "from": 40, "size": 20 }`
+B) `GET /my_index/_search { "page": 3, "size": 20 }`
+C) `GET /my_index/_search { "from": 2, "size": 20 }` 
+D) `GET /my_index/_search { "start": 40, "limit": 20 }`
+
+Q31: When paginating deep within search results using `from` and `size`, what is a potential performance issue?
+
+A) Increased memory usage on the coordinating node due to fetching and sorting all results up to `from + size` from each shard.
+B) `from` + `size` cannot exceed 10,000 by default, causing an error.
+C) Each page request requires a full re-aggregation of data.
+D) Sorting is disabled for requests where `from` is greater than 0.
+
+Q32: What is the recommended method for deep pagination or scrolling through a large number of documents in Elasticsearch, especially when the order of results is important and you need to go beyond the default 10,000 window?
+
+A) Increase `index.max_result_window` to a very large number.
+B) Use `search_after` with a point in time (PIT) reader.
+C) Use the Scroll API (`_search/scroll`).
+D) Implement client-side pagination by fetching all results and then splitting them.
+
+Q33: You want to create an alias named `my_logs` that points to `logs-2023-11` and also filters documents to only include those where `level` is "error". Which is the correct API call?
+
+A)
+POST /_aliases
+{
+  "actions": [
+    {
+      "add": {
+        "index": "logs-2023-11",
+        "alias": "my_logs",
+        "filter": { "term": { "level.keyword": "error" } }
+      }
+    }
+  ]
+}
+
+B)
+PUT /logs-2023-11/_alias/my_logs
+{
+  "filter": { "term": { "level": "error" } }
+}
+
+C)
+POST /_aliases
+{
+  "actions": [
+    { "add": { "index": "logs-2023-11", "alias": "my_logs" } },
+    { "add_filter": { "alias": "my_logs", "filter": { "term": { "level": "error" } } } } 
+  ]
+}
+
+D)
+PUT /my_logs/_alias/logs-2023-11 
+{
+  "query": { "term": { "level": "error" } }
+}
+
+Q34: You have an application that currently writes to an index alias `current_metrics`. You need to reindex your data into a new index `metrics_v2` and then switch the alias to point to this new index atomically, ensuring no downtime for the application. What is the correct sequence of actions in a single `_aliases` API call?
+
+A)
+POST /_aliases
+{
+  "actions": [
+    { "remove": { "alias": "current_metrics", "index": "metrics_v1" } },
+    { "add": { "alias": "current_metrics", "index": "metrics_v2" } }
+  ]
+}
+
+B)
+POST /_aliases
+{
+  "actions": [
+    { "add": { "alias": "current_metrics", "index": "metrics_v2" } },
+    { "remove_index": { "alias": "current_metrics" } } 
+  ]
+}
+
+C)
+POST /_aliases
+{
+  "actions": [
+    { "move": { "from_index": "metrics_v1", "to_index": "metrics_v2", "alias": "current_metrics" } } 
+  ]
+}
+
+D)
+POST /_aliases
+{
+  "actions": [
+    { "add": { "index": "metrics_v2", "alias": "current_metrics", "is_write_index": true } },
+    { "remove": { "index": "metrics_v1", "alias": "current_metrics" } }
+  ]
+}
+
+Q35: What is a primary benefit of using an index alias for write operations (`is_write_index: true`) when dealing with time-series data and rollover?
+
+A) It allows a single alias to write to multiple indices simultaneously.
+B) It automatically creates new indices when the current write index reaches a certain size.
+C) It provides a fixed name for applications to write to, while the underlying concrete index being written to can change seamlessly during a rollover operation.
+D) It enables filtered aliases for write operations, directing documents to different indices based on content.
+
+## Data Processing
+
+Q36: You are designing an index for storing articles. The `title` should be searchable using the standard analyzer. The `publication_date` should be stored as a date. The `author_id` should be stored as an exact value for aggregations and not be analyzed. Additionally, a field `word_count` should store an integer value representing the number of words in the article. Which mapping is most appropriate?
+
+A)
+PUT /articles
+{
+  "mappings": {
+    "properties": {
+      "title": { "type": "text", "analyzer": "standard" },
+      "publication_date": { "type": "date" },
+      "author_id": { "type": "keyword" },
+      "word_count": { "type": "integer" }
+    }
+  }
+}
+
+B)
+PUT /articles
+{
+  "mappings": {
+    "properties": {
+      "title": { "type": "keyword" },
+      "publication_date": { "type": "text" },
+      "author_id": { "type": "text" },
+      "word_count": { "type": "long" }
+    }
+  }
+}
+
+C)
+PUT /articles
+{
+  "mappings": {
+    "dynamic": "strict", 
+    "properties": {
+      "title": { "type": "text" },
+      "publication_date": { "type": "date" },
+      "author_id": { "type": "keyword", "index": false }, 
+      "word_count": { "type": "integer", "enabled": false } 
+    }
+  }
+}
+
+D)
+PUT /articles
+{
+  "mappings": {
+    "properties": {
+      "title": { "type": "text" },
+      "publication_date": { "type": "date", "format": "yyyy-MM-dd" }, 
+      "author_id": { "type": "keyword" },
+      "word_count": { "type": "scaled_float", "scaling_factor": 1 } 
+    }
+  }
+}
+
+Q37: You need to map a field `tags` which will store an array of strings. These tags should be searchable for exact matches (case-sensitive) and also be available for aggregations. Which mapping should you choose for the `tags` field?
+
+A) `{ "type": "keyword" }`
+B) `{ "type": "text", "analyzer": "keyword" }` 
+C) `{ "type": "text", "fields": { "raw": { "type": "keyword" } } }` 
+D) `{ "type": "array", "inner_type": "keyword" }` 
+
+Q38: You have a field `product_name` that needs to be searchable with the English analyzer for full-text search and also as a keyword for exact sorting and aggregations. How do you define this in the mapping?
+
+A)
+{
+  "product_name": {
+    "type": "text",
+    "analyzer": "english",
+    "fields": {
+      "keyword": { "type": "keyword" }
+    }
+  }
+}
+
+B)
+{
+  "product_name": { "type": "text", "analyzer": "english" },
+  "product_name.keyword": { "type": "keyword" } 
+}
+
+C)
+{
+  "product_name": {
+    "type": "keyword",
+    "fields": {
+      "english": { "type": "text", "analyzer": "english" }
+    }
+  }
+}
+
+D)
+{
+  "product_name": [ 
+    { "type": "text", "analyzer": "english" },
+    { "type": "keyword" }
+  ]
+}
+
+Q39: You want to map a `location_name` field. It should be searchable case-insensitively using a custom normalizer for keyword-like behavior, and also be available for standard text analysis for broader matching. The custom normalizer `lowercase_normalizer` is defined to just lowercase text.
+
+A)
+{
+  "location_name": {
+    "type": "text",
+    "analyzer": "standard",
+    "fields": {
+      "normalized": {
+        "type": "keyword",
+        "normalizer": "lowercase_normalizer"
+      }
+    }
+  }
+}
+
+B)
+{
+  "location_name": {
+    "type": "keyword",
+    "normalizer": "lowercase_normalizer",
+    "fields": {
+      "text": { "type": "text", "analyzer": "standard" }
+    }
+  }
+}
+
+C)
+{
+  "location_name": {
+    "type": "text",
+    "analyzer": "standard"
+  },
+  "location_name_normalized": { 
+    "type": "keyword",
+    "normalizer": "lowercase_normalizer"
+  }
+}
+
+D)
+{
+  "location_name": {
+    "type": "text",
+    "analyzer": "standard",
+    "copy_to": "location_name.normalized" 
+  },
+ "location_name.normalized": {
+    "type": "keyword",
+    "normalizer": "lowercase_normalizer"
+  }
+}
+
+Q40: You need to copy all documents from `source_index` to `destination_index` and simultaneously add a new field `status` with the value "processed" to each document. Which API and body structure should you use?
+
+A) Reindex API:
+POST _reindex
+{
+  "source": { "index": "source_index" },
+  "dest": { "index": "destination_index" },
+  "script": {
+    "source": "ctx._source.status = 'processed'",
+    "lang": "painless"
+  }
+}
+
+B) Update By Query API on `destination_index` (after copying without script):
+POST /destination_index/_update_by_query
+{
+  "script": { "source": "ctx._source.status = 'processed'" },
+  "query": { "match_all": {} }
+}
+
+C) Reindex API:
+POST _reindex
+{
+  "source": { "index": "source_index" },
+  "dest": { "index": "destination_index", "pipeline": "add_status_pipeline" } 
+}
+
+D) Update By Query API on `source_index`:
+POST /source_index/_update_by_query
+{
+  "script": { "source": "ctx._source.status = 'processed'; reindex ctx._id to destination_index" } 
+}
+
+Q41: You want to update all documents in the `products` index where the `stock_count` is 0, by setting a new field `availability` to "out_of_stock". What is the correct Update By Query request?
+
+A)
+POST /products/_update_by_query
+{
+  "query": { "term": { "stock_count": 0 } },
+  "script": {
+    "source": "ctx._source.availability = 'out_of_stock'",
+    "lang": "painless"
+  }
+}
+
+B)
+POST /products/_update
+{
+  "query": { "term": { "stock_count": 0 } }, 
+  "script": { "source": "ctx._source.availability = 'out_of_stock'" }
+}
+
+C)
+POST /products/_update_by_query
+{
+  "script": {
+    "source": "if (ctx._source.stock_count == 0) { ctx._source.availability = 'out_of_stock' } else { ctx.op = 'noop' }"
+  }
+}
+
+D)
+POST /products/_update_by_query
+{
+  "filter": { "term": { "stock_count": 0 } }, 
+  "script": { "inline": "ctx._source.availability = params.status", "params": {"status": "out_of_stock"} }
+}
+
+Q42: You are creating an ingest pipeline to process incoming log data. The pipeline needs to:
+1. Rename the field `client_ip` to `ip_address`.
+2. Convert the value of `response_code` (which is a string) to an integer.
+3. Remove the field `temp_debug_message`.
+Which pipeline definition is correct?
+
+A)
+PUT _ingest/pipeline/log_processing_pipeline
+{
+  "processors": [
+    { "rename": { "field": "client_ip", "target_field": "ip_address" } },
+    { "convert": { "field": "response_code", "type": "integer" } },
+    { "remove": { "field": "temp_debug_message" } }
+  ]
+}
+
+B)
+PUT _ingest/pipeline/log_processing_pipeline
+{
+  "processors": [
+    { "set": { "field": "ip_address", "value": "{{client_ip}}" } }, 
+    { "script": { "source": "ctx.response_code = Integer.parseInt(ctx.response_code)" } },
+    { "drop": { "field": "temp_debug_message" } } 
+  ]
+}
+
+C)
+PUT _ingest/pipeline/log_processing_pipeline
+{
+  "description": "Processes log data",
+  "processors": [
+    { "rename": { "source_field": "client_ip", "to": "ip_address" } }, 
+    { "convert": { "field": "response_code", "to_type": "int" } }, 
+    { "remove": { "field": "temp_debug_message", "if": "ctx.temp_debug_message != null" } } 
+  ]
+}
+
+D)
+PUT _ingest/pipeline/log_processing_pipeline
+{
+  "processors": [
+    { "move": { "from": "client_ip", "to": "ip_address" } }, 
+    { "convert": { "field": "response_code", "type": "integer", "ignore_missing": true } },
+    { "remove": { "field": "temp_debug_message" } }
+  ]
+}
+
+Q43: You have an ingest pipeline that uses the Grok processor to parse Apache logs. If the Grok pattern does NOT match the incoming `message` field, you want to tag the document with "grok_parse_failure". How do you configure this?
+
+A)
+{
+  "processors": [
+    {
+      "grok": {
+        "field": "message",
+        "patterns": ["%{COMBINEDAPACHELOG}"],
+        "on_failure": [
+          { "set": { "field": "parse_error", "value": "grok_failed" } } 
+        ]
+      }
+    }
+  ]
+}
+B)
+{
+  "processors": [
+    {
+      "grok": {
+        "field": "message",
+        "patterns": ["%{COMBINEDAPACHELOG}"]
+      }
+    },
+    { 
+      "script": {
+        "source": "if (ctx.message_parsed == null) { ctx.tags = ['grok_parse_failure'] }",
+        "if": "!ctx.containsKey('apache_verb')" 
+      }
+    }
+  ]
+}
+
+C)
+{
+  "processors": [
+    {
+      "grok": {
+        "field": "message",
+        "patterns": ["%{COMBINEDAPACHELOG}"],
+        "ignore_failure": false, 
+        "tag_on_failure" : "grok_parse_failure" 
+      }
+    }
+  ]
+}
+
+D) 
+{
+  "processors": [
+    {
+      "grok": {
+        "field": "message",
+        "patterns": ["%{COMBINEDAPACHELOG}"],
+        "on_failure": [  
+          {
+            "set": {
+              "field": "tags",
+              "value": "grok_parse_failure",
+              "override": false 
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+
+Q44: You have an index with `price` (float) and `tax_rate` (float, e.g., 0.05 for 5%). You want to define a runtime field `total_price` that calculates `price * (1 + tax_rate)`. How would you define this in a search query?
+
+A)
+GET /my_index/_search
+{
+  "runtime_mappings": {
+    "total_price": {
+      "type": "double",
+      "script": "emit(doc['price'].value * (1 + doc['tax_rate'].value))"
+    }
+  },
+  "query": { "range": { "total_price": { "gte": 100 } } }
+}
+
+B)
+GET /my_index/_search
+{
+  "runtime_mappings": {
+    "total_price": {
+      "type": "double",
+      "painless_script": "doc['price'].value * (1 + doc['tax_rate'].value)" 
+    }
+  },
+  "query": { "range": { "total_price": { "gte": 100 } } }
+}
+
+C)
+GET /my_index/_search
+{
+  "query": {
+    "bool": {
+      "filter": {
+        "script": { 
+          "script": "doc['price'].value * (1 + doc['tax_rate'].value) >= 100"
+        }
+      }
+    }
+  }
+}
+
+D)
+GET /my_index/_search
+{
+  "runtime_mappings": {
+    "total_price": {
+      "script": "emit(doc.price * (1 + doc.tax_rate))" 
+    }
+  },
+  "query": { "range": { "total_price": { "gte": 100 } } }
+}
+
+Q45: You want to define a runtime field `full_name` that concatenates `first_name` and `last_name` (both keyword fields) with a space in between. If `last_name` is missing, it should just return `first_name`.
+
+A)
+{
+  "runtime_mappings": {
+    "full_name": {
+      "type": "keyword",
+      "script": """
+        if (doc['last_name'].size() == 0) {
+          emit(doc['first_name'].value);
+        } else {
+          emit(doc['first_name'].value + ' ' + doc['last_name'].value);
+        }
+      """
+    }
+  }
+}
+
+B)
+{
+  "runtime_mappings": {
+    "full_name": {
+      "type": "text", 
+      "script": "doc['first_name'] + (doc['last_name'] != null ? ' ' + doc['last_name'] : '')" 
+    }
+  }
+}
+
+C)
+{
+  "runtime_mappings": {
+    "full_name": {
+      "type": "keyword",
+      "script": "emit(params.first + ' ' + params.last)", 
+      "params": { "first": "doc['first_name'].value", "last": "doc['last_name'].value"}
+    }
+  }
+}
+
+D)
+{
+  "runtime_mappings": {
+    "full_name": {
+      "type": "keyword",
+      "script": """
+        String lastName = doc['last_name'].empty ? "" : " " + doc['last_name'].value; 
+        emit(doc['first_name'].value + lastName);
+      """
+    }
+  }
+}
+
+## Cluster Management
+
+Q46: Your cluster health is yellow. Using `GET _cluster/allocation/explain`, you find an unassigned replica shard. The explanation indicates "cannot allocate replica on the same node as primary". What is the most likely cause and a valid first step to resolve this if you have other available nodes?
+
+A) Cause: Insufficient disk space on other nodes. Step: Add more nodes to the cluster.
+B) Cause: The primary shard's node is the only node in the cluster. Step: Add at least one more data node to the cluster.
+C) Cause: `cluster.routing.allocation.same_shard.host` is set to `true`. Step: Set `cluster.routing.allocation.same_shard.host` to `false`.
+D) Cause: The index setting `index.routing.allocation.include._name` is preventing allocation on other nodes. Step: Remove the restrictive index setting.
+
+Q47: The Cluster Allocation Explain API (`GET _cluster/allocation/explain`) returns a decision: `NO_VALID_SHARD_COPY`. What does this generally indicate as the primary reason for an unassigned shard?
+
+A) The cluster has too many shards, and some need to be deleted.
+B) None of the existing copies of the shard data (primary or replica) can be found or are healthy enough to be promoted to primary.
+C) There are no eligible nodes to host the shard based on allocation deciders (e.g., disk watermark, attribute filtering).
+D) The shard is currently being relocated to another node.
+
+Q48: You need to back up all open indices in your cluster, except for security-related indices (`.security*`), to a registered repository named `my_backup_repo`. The snapshot should be named `snapshot_2023_q4`. Which is the correct API call?
+
+A)
+PUT /_snapshot/my_backup_repo/snapshot_2023_q4
+{
+  "indices": "*,-.security*",
+  "include_global_state": true
+}
+
+B)
+POST /_snapshot/my_backup_repo/snapshot_2023_q4
+{
+  "indexes": "*", 
+  "ignore_unavailable": true,
+  "exclude_indices": ".security*" 
+}
+
+C)
+PUT /_snapshot/my_backup_repo/snapshot_2023_q4?wait_for_completion=true
+{
+  "indices": "*",
+  "feature_states_to_ignore": ["security"] 
+}
+
+D)
+POST /_snapshot/my_backup_repo/snapshot_2023_q4
+{
+  "indices": ["*", "-.security*"], 
+  "include_global_state": false 
+}
+
+Q49: You have a snapshot `snap1` in repository `repo1` containing multiple indices. You need to restore only the `logs-2023` index from this snapshot and rename it to `restored_logs-2023` during the restore process. You also want to ensure the restored index does not have replicas initially. What is the correct restore request?
+
+A)
+POST /_snapshot/repo1/snap1/_restore
+{
+  "indices": "logs-2023",
+  "rename_pattern": "(.+)",
+  "rename_replacement": "restored_$1",
+  "index_settings": {
+    "index.number_of_replicas": 0
+  }
+}
+
+B)
+POST /_snapshot/repo1/snap1/_restore
+{
+  "indices_to_restore": ["logs-2023"], 
+  "rename_to": "restored_logs-2023", 
+  "settings": { "number_of_replicas": 0 } 
+}
+
+C)
+POST /_restore/repo1/snap1
+{
+  "index": "logs-2023", 
+  "new_name": "restored_logs-2023", 
+  "ignore_index_settings": ["index.number_of_replicas"]
+}
+
+D)
+PUT /_snapshot/repo1/snap1/_restore 
+{
+  "indices": "logs-2023",
+  "rename_pattern": "logs-2023",
+  "rename_replacement": "restored_logs-2023",
+  "index_settings": {
+    "index.number_of_replicas": 0
+  },
+  "ignore_unavailable": true
+}
+
+Q50: You have a snapshot named `archive_logs_snapshot` in a repository `my_s3_repo`. You want to make this snapshot searchable directly without restoring it to the cluster's disk, using the "frozen" data tier. What is a key step in this process?
+
+A) Register `my_s3_repo` with `readonly: true` and `type: searchable_s3`.
+B) Use the `/_snapshot/my_s3_repo/archive_logs_snapshot/_mount` API with `storage: "shared_cache"`.
+C) Modify the ILM policy to include a `searchable_snapshot` action pointing to `my_s3_repo`.
+D) Create a new "searchable snapshot index" that directly reads from `my_s3_repo`.
+
+Q51: When a snapshot is mounted as a searchable snapshot using the "shared_cache" storage option, where is the primary copy of the data segments stored?
+
+A) Fully copied to the local disk of one or more nodes in the cluster.
+B) Remains in the snapshot repository, and frequently accessed data is cached locally on nodes.
+C) Distributed across all data nodes in the cluster, similar to a regular index.
+D) Copied to a dedicated set of "frozen tier" nodes that have special caching capabilities.
+
+Q52: You want to enable your current Elasticsearch cluster (let's call it `reporting_cluster`) to search indices located on a remote cluster named `production_cluster` (seeds: `prod-node1:9300`, `prod-node2:9300`). What is the minimal persistent configuration required on `reporting_cluster`?
+
+A)
+PUT /_cluster/settings
+{
+  "persistent": {
+    "cluster.remote.production_cluster.seeds": ["prod-node1:9300", "prod-node2:9300"]
+  }
+}
+
+B)
+PUT /_cluster/settings
+{
+  "persistent": {
+    "search.remote.production_cluster.seeds": ["prod-node1:9300", "prod-node2:9300"] 
+  }
+}
+
+C)
+In `elasticsearch.yml` on all nodes of `reporting_cluster`:
+\`\`\`yml
+cluster.remote:
+  production_cluster:
+    seeds:
+      - "prod-node1:9300"
+      - "prod-node2:9300"
+\`\`\`
+Then restart all nodes. 
+
+D)
+PUT /_nodes/production_cluster/_settings 
+{
+  "cluster.remote.seeds": ["prod-node1:9300", "prod-node2:9300"]
+}
+
+Q53: When configuring Cross-Cluster Search (CCS) between two clusters, what is a critical network requirement?
+
+A) Both clusters must be in the same datacenter.
+B) The querying cluster nodes must have HTTP access to the remote cluster's master nodes on port 9200.
+C) The querying cluster nodes must have TCP transport access to the remote cluster's designated transport port (default 9300) on the nodes specified in the `seeds` or `node_connections`.
+D) A VPN tunnel must be established between the two clusters for security.
+
+Q54: You want to replicate the `sales_index` from your `us-east-1` cluster (leader) to your `eu-west-1` cluster (follower) for disaster recovery. What is a prerequisite for setting up Cross-Cluster Replication (CCR)?
+
+A) Both leader and follower indices must have the same number of primary shards.
+B) The leader index (`sales_index` on `us-east-1`) must have `index.soft_deletes.enabled` set to `true`.
+C) An ILM policy must be configured on the follower index to manage its lifecycle.
+D) The follower cluster must have a remote connection configured back to the leader cluster.
+
+Q55: You are setting up a cross-cluster replication (CCR) follower index. What is the API call to create a follower index named `follower_sales` in the local (follower) cluster, which replicates `leader_sales` from the `leader_cluster_alias` remote?
+
+A)
+PUT /follower_sales/_ccr/follow
+{
+  "remote_cluster": "leader_cluster_alias",
+  "leader_index": "leader_sales"
+}
+
+B)
+POST /_ccr/follow
+{
+  "follower_index": "follower_sales",
+  "remote_cluster": "leader_cluster_alias",
+  "leader_index": "leader_sales"
+}
+
+C)
+PUT /follower_sales
+{
+  "type": "follower", 
+  "settings": {
+    "index.ccr.remote_cluster": "leader_cluster_alias",
+    "index.ccr.leader_index": "leader_sales"
+  }
+}
+
+D)
+POST /follower_sales/_replicate_from/leader_cluster_alias/leader_sales 
+
+Q56: You want to create an SLM policy named `daily_snapshots_policy` that takes a snapshot every day at 1:00 AM. The snapshots should be stored in the `backup_repo` repository and named with the pattern `<daily-snap-{now/d}>`. How do you define this policy?
+
+A)
+PUT /_slm/policy/daily_snapshots_policy
+{
+  "schedule": "0 0 1 * * ?",
+  "name": "<daily-snap-{now/d}>",
+  "repository": "backup_repo",
+  "config": {
+    "indices": ["*"],
+    "include_global_state": false
+  }
+}
+
+B)
+POST /_slm/policy/daily_snapshots_policy
+{
+  "cron_schedule": "0 1 0 * * *", 
+  "snapshot_name_template": "daily-snap-{date}", 
+  "repository_name": "backup_repo",
+  "configuration": { 
+    "indices": "*"
+  }
+}
+
+C)
+PUT /_snapshot_lifecycle/daily_snapshots_policy 
+{
+  "schedule": { "cron": "0 0 1 * * ?" },
+  "name_format": "<daily-snap-{now/d}>",
+  "repository": "backup_repo",
+  "retain": { "days": 7 } 
+}
+
+D)
+POST /_slm/policy
+{
+  "id": "daily_snapshots_policy", 
+  "schedule_time": "01:00", 
+  "name": "daily-snap-{count}",
+  "repo": "backup_repo"
+}
+
+Q57: In an SLM policy, what is the purpose of the `retention` configuration?
+
+A) To define how long the snapshot data is kept in the repository before being automatically deleted by SLM.
+B) To specify the number of old indices to keep in the cluster before they are snapshotted.
+C) To determine how long the SLM policy itself remains active before being disabled.
+D) To configure the retention of SLM execution logs.

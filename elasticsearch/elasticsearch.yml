@@ -1,0 +1,9 @@
+cluster.name: lab-cluster
+network.host: 0.0.0.0
+discovery.type: single-node
+node.name: node01
+node.roles: master,data,remote_cluster_client,ingest
+bootstrap.memory_lock: true
+xpack.security.enabled: false
+path.repo: 
+ - /usr/share/elasticsearch/backup

@@ -1,0 +1,9 @@
+cluster.name: secondary-cluster
+network.host: 0.0.0.0
+discovery.type: single-node
+node.name: my-remote-node
+node.roles: master,data
+bootstrap.memory_lock: true
+xpack.security.enabled: false
+path.repo: 
+ - /usr/share/elasticsearch/backup

@@ -118,6 +118,8 @@ services:
       - ELASTICSEARCH_HOSTS=["http://elasticsearch1:9200","http://elasticsearch2:9200","http://elasticsearch3:9200"]
       - SERVER_BASEPATH=/kibana
       - SERVER_REWRITEBASEPATH=true
+      - CSP_STRICT=false
+      - CSP_WARNLEGACYBROWSERS=false
     networks:
       - elastic_network
     depends_on:

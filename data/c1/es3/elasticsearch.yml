@@ -1,0 +1,7 @@
+cluster.name: c1
+network.host: [_local_, _site_]
+cluster.initial_master_nodes: ["es1", "es2", "es3"]
+discovery.seed_hosts: "192.168.17.10,192.168.17.11,192.168.17.12"
+node.name: es3
+bootstrap.memory_lock: true
+xpack.security.enabled: false

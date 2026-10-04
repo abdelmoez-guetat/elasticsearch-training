@@ -35,102 +35,150 @@ services:
       - elasticsearch1
     restart: unless-stopped
 
-  elasticsearch1:
+   c1es1:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
-    container_name: elasticsearch1
-    hostname: elasticsearch1
+    container_name: c1es1
+    hostname: c1es1
+    volumes:
+      - ./data/c1/es1/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./data/c1/es1/elastic-data:/usr/share/elasticsearch/data
     environment:
-      - node.name=node1
-      - cluster.name=elasticsearch-cluster
-      - cluster.initial_master_nodes=node1,node2,node3
-      - node.roles=master,data
-      - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - xpack.security.enabled=false
     ulimits:
       memlock:
         soft: -1
         hard: -1
     networks:
-      - elastic_network
+      elastic_c1_network:
+        ipv4_address: "192.168.17.10"
+      global_network:
+        ipv4_address: "10.8.0.2"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://elasticsearch1:9200/_cluster/health || exit 1"]
-      interval: 15s
+      test: ["CMD-SHELL", "curl -f http://c1es1:9200/_cluster/health || exit 1"]
+      interval: 30s
       retries: 10
       timeout: 10s
     restart: unless-stopped
 
-  elasticsearch2:
+  c1es2:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
-    container_name: elasticsearch2
-    hostname: elasticsearch2
+    container_name: c1es2
+    hostname: c1es2
+    volumes:
+      - ./data/c1/es2/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./data/c1/es2/elastic-data:/usr/share/elasticsearch/data
     environment:
-      - node.name=node2
-      - cluster.name=elasticsearch-cluster
-      - discovery.seed_hosts=elasticsearch1
-      - cluster.initial_master_nodes=node1,node2,node3
-      - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - xpack.security.enabled=false
     ulimits:
       memlock:
         soft: -1
         hard: -1
     networks:
-      - elastic_network
+      elastic_c1_network:
+        ipv4_address: "192.168.17.11"
+      global_network:
+        ipv4_address: "10.8.0.3"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://elasticsearch2:9200/_cluster/health || exit 1"]
-      interval: 15s
+      test: ["CMD-SHELL", "curl -f http://c1es2:9200/_cluster/health || exit 1"]
+      interval: 30s
       retries: 10
       timeout: 10s
     restart: unless-stopped
 
-  elasticsearch3:
+  c1es3:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
-    container_name: elasticsearch3
-    hostname: elasticsearch3
+    container_name: c1es3
+    hostname: c1es3
+    volumes:
+      - ./data/c1/es3/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./data/c1/es3/elastic-data:/usr/share/elasticsearch/data
     environment:
-      - node.name=node3
-      - cluster.name=elasticsearch-cluster
-      - discovery.seed_hosts=elasticsearch1
-      - cluster.initial_master_nodes=node1,node2,node3
-      - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - xpack.security.enabled=false
     ulimits:
       memlock:
         soft: -1
         hard: -1
     networks:
-      - elastic_network
+      elastic_c1_network:
+        ipv4_address: "192.168.17.12"
+      global_network:
+        ipv4_address: "10.8.0.4"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://elasticsearch3:9200/_cluster/health || exit 1"]
-      interval: 15s
+      test: ["CMD-SHELL", "curl -f http://c1es3:9200/_cluster/health || exit 1"]
+      interval: 30s
       retries: 10
       timeout: 10s
     restart: unless-stopped
 
-  kibana:
+  kibana-c1:
     image: docker.elastic.co/kibana/kibana:8.13.2
-    container_name: kibana
-    hostname: kibana
+    container_name: kibana-c1
+    hostname: kibana-c1
     environment:
-      - ELASTICSEARCH_HOSTS=["http://elasticsearch1:9200","http://elasticsearch2:9200","http://elasticsearch3:9200"]
-      - SERVER_BASEPATH=/kibana
-      - SERVER_REWRITEBASEPATH=true
-      - CSP_STRICT=false
-      - CSP_WARNLEGACYBROWSERS=false
+      - ELASTICSEARCH_HOSTS=["http://c1es1:9200","http://c1es2:9200","http://c1es3:9200"]
+    ports:
+      - "15601:5601"
     networks:
-      - elastic_network
-    depends_on:
-      elasticsearch1:
-        condition: service_healthy
-      elasticsearch2:
-        condition: service_healthy
-      elasticsearch3:
-        condition: service_healthy
+      - elastic_c1_network
+      - access_network
+    restart: unless-stopped
+    
+    
+  c2es1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
+    container_name: c2es1
+    hostname: c2es1
+    volumes:
+      - ./data/c2/es1/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./data/c2/es1/elastic-data:/usr/share/elasticsearch/data
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      elastic_c2_network:
+        ipv4_address: "192.168.18.10"
+      global_network:
+        ipv4_address: "10.8.1.2"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://c2es1:9200/_cluster/health || exit 1"]
+      interval: 30s
+      retries: 10
+      timeout: 10s
+    restart: unless-stopped
+
+  kibana-c2:
+    image: docker.elastic.co/kibana/kibana:8.13.2
+    container_name: kibana-c2
+    hostname: kibana-c2
+    environment:
+      - ELASTICSEARCH_HOSTS=["http://c2es1:9200"]
+    ports:
+      - "25601:5601"
+    networks:
+      - elastic_c2_network
+      - access_network
     restart: unless-stopped
 
 networks:
-  elastic_network:
+  elastic_c1_network:
+    driver: ipvlan
+    ipam:
+      config:
+        - subnet: 192.168.17.0/24
+  elastic_c2_network:
+    driver: ipvlan
+    ipam:
+      config:
+        - subnet: 192.168.18.0/24
+  global_network:
+    driver: ipvlan
+    ipam:
+      config:
+        - subnet: 10.8.0.0/16
+  access_network:
     driver: bridge
+
+

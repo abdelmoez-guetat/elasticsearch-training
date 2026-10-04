@@ -1,0 +1,8 @@
+cluster.name: c2
+network.host: "0.0.0.0"
+discovery.type: single-node
+node.name: es1
+bootstrap.memory_lock: true
+xpack.security.enabled: false
+## SHOULD NOT BE COMMITTED
+path.repo: "/mnt/backup"

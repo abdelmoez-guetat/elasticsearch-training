@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elasticsearch Certification Simulator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; color: #f8fafc; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+    /* Header */
+    header { background: #1e293b; border-bottom: 1px solid #334155; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; height: 50px; }
+    .brand { font-size: 1.1rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+    .brand-logo { font-size: 1.3rem; }
+    .timer-container { font-family: monospace; font-size: 1.2rem; font-weight: bold; background: #090d16; padding: 4px 12px; border-radius: 6px; border: 1px solid #475569; color: #38bdf8; }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .btn { background: #0284c7; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: background 0.2s; }
+    .btn:hover { background: #0369a1; }
+    .btn-danger { background: #e11d48; }
+    .btn-danger:hover { background: #be123c; }
+
+    /* Main Container */
+    .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+    /* Left Pane - Questions & Navigator */
+    .left-pane { width: 40%; border-right: 2px solid #334155; display: flex; flex-direction: column; background: #0f172a; }
+    .question-header { background: #1e293b; padding: 12px 16px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+    .question-title { font-size: 1rem; font-weight: 600; color: #f1f5f9; }
+    .question-list { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 16px; background: #182234; border-bottom: 1px solid #334155; max-height: 120px; overflow-y: auto; }
+    .q-btn { width: 32px; height: 32px; border-radius: 4px; border: 1px solid #475569; background: #334155; color: #cbd5e1; font-weight: bold; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .q-btn.active { background: #0284c7; border-color: #38bdf8; color: white; }
+    .q-btn.solved { background: #15803d; border-color: #22c55e; color: white; }
+
+    .question-body { flex: 1; padding: 20px; overflow-y: auto; font-size: 0.95rem; line-height: 1.6; color: #e2e8f0; }
+    .question-body h3 { color: #38bdf8; margin-bottom: 10px; border-bottom: 1px solid #334155; padding-bottom: 6px; }
+    .question-body pre { background: #1e293b; padding: 12px; border-radius: 6px; border: 1px solid #334155; overflow-x: auto; font-family: monospace; font-size: 0.88rem; margin: 10px 0; }
+    .question-body code { background: #1e293b; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #fda4af; }
+    .dataset-info { margin-top: 20px; padding: 12px; background: #1e293b; border-left: 4px solid #38bdf8; border-radius: 4px; font-size: 0.85rem; }
+
+    /* Question Footer Nav */
+    .question-footer { padding: 12px 16px; background: #1e293b; border-top: 1px solid #334155; display: flex; justify-content: space-between; }
+
+    /* Right Pane - OS Desktop / Terminal / Navigator */
+    .right-pane { width: 60%; display: flex; flex-direction: column; background: #020617; }
+    .tab-bar { background: #0f172a; border-bottom: 1px solid #334155; display: flex; padding-left: 10px; height: 40px; align-items: flex-end; }
+    .tab { padding: 8px 16px; background: #1e293b; color: #94a3b8; border-top-left-radius: 6px; border-top-right-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; margin-right: 4px; border: 1px solid #334155; border-bottom: none; display: flex; align-items: center; gap: 6px; }
+    .tab.active { background: #020617; color: #38bdf8; border-top: 2px solid #38bdf8; }
+
+    .tab-content { flex: 1; position: relative; background: #020617; }
+    .pane-content { position: absolute; top:0; left:0; width:100%; height:100%; display: none; }
+    .pane-content.active { display: block; }
+
+    /* Navigator Browser Bar */
+    .nav-bar { height: 38px; background: #1e293b; border-bottom: 1px solid #334155; display: flex; align-items: center; padding: 0 10px; gap: 8px; }
+    .nav-btn { background: #334155; border: none; color: #e2e8f0; width: 26px; height: 26px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .nav-btn:hover { background: #475569; }
+    .nav-url { flex: 1; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 4px 12px; border-radius: 4px; font-size: 0.85rem; font-family: monospace; }
+
+    iframe { width: 100%; height: calc(100% - 38px); border: none; background: #fff; }
+    .terminal-iframe { width: 100%; height: 100%; border: none; background: #000; }
+
+    /* Modal / Results */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
+    .modal-overlay.active { display: flex; }
+    .modal-box { background: #1e293b; border: 1px solid #475569; border-radius: 8px; width: 650px; max-width: 90%; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
+    .modal-header { padding: 16px 20px; background: #0f172a; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+    .modal-footer { padding: 12px 20px; background: #0f172a; border-top: 1px solid #334155; text-align: right; }
+
+    .score-banner { font-size: 2rem; font-weight: bold; text-align: center; margin-bottom: 15px; padding: 15px; border-radius: 6px; }
+    .score-banner.pass { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
+    .score-banner.fail { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+
+    .eval-list { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+    .eval-item { padding: 10px 14px; border-radius: 6px; background: #0f172a; border: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+    .eval-item.pass { border-left: 4px solid #22c55e; }
+    .eval-item.fail { border-left: 4px solid #ef4444; }
+    .badge { padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+    .badge-pass { background: #166534; color: #4ade80; }
+    .badge-fail { background: #991b1b; color: #fca5a5; }
+
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <span class="brand-logo">⚡</span> Elasticsearch Certification Simulator (CK-X)
+    </div>
+    <div class="timer-container" id="timer">02:00:00</div>
+    <div class="header-actions">
+      <button class="btn btn-danger" onclick="confirmSubmitExam()">End Exam & Submit</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="main-container">
+
+    <!-- Left Pane: Questions -->
+    <div class="left-pane">
+      <div class="question-header">
+        <span class="question-title" id="q-title">Exercise 1 of 23</span>
+        <span style="font-size: 0.8rem; color: #94a3b8;" id="q-category">Data Management</span>
+      </div>
+
+      <div class="question-list" id="q-list">
+        <!-- Question buttons generated dynamically -->
+      </div>
+
+      <div class="question-body" id="q-body">
+        <!-- Question details injected here -->
+      </div>
+
+      <div class="question-footer">
+        <button class="btn" id="btn-prev" onclick="changeQuestion(-1)">← Previous</button>
+        <button class="btn" id="btn-next" onclick="changeQuestion(1)">Next →</button>
+      </div>
+    </div>
+
+    <!-- Right Pane: Terminal / Navigator Tabs -->
+    <div class="right-pane">
+      <div class="tab-bar">
+        <div class="tab active" id="tab-term-btn" onclick="switchTab('terminal')">
+          <span>💻</span> Web Terminal
+        </div>
+        <div class="tab" id="tab-nav-btn" onclick="switchTab('navigator')">
+          <span>🌐</span> Browser / Navigator
+        </div>
+      </div>
+
+      <div class="tab-content">
+        <!-- Terminal Tab Content -->
+        <div class="pane-content active" id="pane-terminal">
+          <iframe src="/ttyd/" class="terminal-iframe" title="Web Terminal"></iframe>
+        </div>
+
+        <!-- Navigator Tab Content -->
+        <div class="pane-content" id="pane-navigator">
+          <div class="nav-bar">
+            <button class="nav-btn" onclick="navGo('docs')">📚 Docs Home</button>
+            <button class="nav-btn" onclick="navGo('kibana')">📊 Kibana</button>
+            <input type="text" class="nav-url" id="nav-url-input" readonly value="https://www.elastic.co/guide/en/elasticsearch/reference/8.13/index.html">
+            <button class="nav-btn" onclick="refreshNav()">🔄</button>
+          </div>
+          <iframe id="nav-iframe" src="/docs-proxy/" title="Web Navigator"></iframe>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Results Modal -->
+  <div class="modal-overlay" id="results-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Exam Evaluation Results</h3>
+        <button class="btn" onclick="closeModal()">Close</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <div style="text-align: center; padding: 20px;" id="eval-loading">
+          Evaluating your submission against Elasticsearch cluster... Please wait.
+        </div>
+        <div id="eval-results" style="display: none;">
+          <div class="score-banner" id="score-banner">75% - PASS</div>
+          <div class="eval-list" id="eval-list">
+            <!-- Results injected here -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        id: 1,
+        title: "Exercise 1: Define an Index",
+        category: "Data Management",
+        description: `Create an index named <code>products</code> with a custom mapping where:
+        <ul>
+          <li><code>name</code>, <code>category</code>, and <code>description</code> fields are analyzed text fields.</li>
+          <li><code>price</code>, <code>stock</code>, and <code>rating</code> are <code>double</code> fields.</li>
+        </ul>`,
+        datasetNote: "Initial dataset files available in shell working directory: <code>/datasets/products.ndjson</code>"
+      },
+      {
+        id: 2,
+        title: "Exercise 2: Define an Index Template",
+        category: "Data Management",
+        description: `Create an Elasticsearch index template for indices matching the pattern <code>products-*</code>. The template should include mappings and settings specifying:
+        <ul>
+          <li><code>name</code> and <code>description</code> fields are analyzed as <code>text</code>.</li>
+          <li><code>category</code> field is treated as a <code>keyword</code>.</li>
+          <li><code>price</code> field is defined as a <code>double</code>.</li>
+          <li><code>stock</code> and <code>rating</code> fields are defined as <code>integer</code>s.</li>
+          <li>Set <code>number_of_shards</code> to 3 and <code>number_of_replicas</code> to 1.</li>
+        </ul>`
+      },
+      {
+        id: 3,
+        title: "Exercise 3: Dynamic Templates",
+        category: "Data Management",
+        description: `Create a dynamic template that applies to fields ending in <code>_txt</code>, treating them as analyzed <code>text</code> fields.`
+      },
+      {
+        id: 4,
+        title: "Exercise 4: Index Lifecycle Management",
+        category: "Data Management",
+        description: `Define an ILM policy named <code>sales-ilm-policy</code> for time-series indices with hot, warm, and cold storage phases.`
+      },
+      {
+        id: 5,
+        title: "Exercise 5: Data Stream",
+        category: "Data Management",
+        description: `Create an index template named <code>orders-template</code> configured for a data stream <code>orders-stream-*</code> with appropriate timestamp field mapping.`
+      },
+      {
+        id: 6,
+        title: "Exercise 6: Basic Search Query",
+        category: "Searching Data",
+        description: `Write a search query on the <code>products</code> index to find all products that have the term "electronics" in the <code>category</code> field.`
+      },
+      {
+        id: 7,
+        title: "Exercise 7: Boolean Query",
+        category: "Searching Data",
+        description: `Create a search query on <code>products</code> filtering products with <code>rating >= 4.0</code> and <code>price</code> between 100 and 1000.`
+      },
+      {
+        id: 8,
+        title: "Exercise 8: Asynchronous Search",
+        category: "Searching Data",
+        description: `Write and submit an asynchronous search request to retrieve products where <code>tags</code> contains the keyword "winter".`
+      },
+      {
+        id: 9,
+        title: "Exercise 9: Aggregations",
+        category: "Searching Data",
+        description: `Write a metric aggregation query to calculate the average price of all products in the "Electronics" category.`
+      },
+      {
+        id: 10,
+        title: "Exercise 10: Sub-Aggregations",
+        category: "Searching Data",
+        description: `Write a bucket aggregation query to group products by <code>category</code> and calculate the average rating within each category.`
+      },
+      {
+        id: 11,
+        title: "Exercise 11: Cross-Cluster Search",
+        category: "Searching Data",
+        description: `Configure a remote cluster entry <code>remote_cluster</code> in Elasticsearch and write a search query spanning local and remote indices.`
+      },
+      {
+        id: 12,
+        title: "Exercise 12: Highlight Search Terms",
+        category: "Developing Search Applications",
+        description: `Execute a search query on <code>products</code> that highlights the term "laptop" in the <code>description</code> field.`
+      },
+      {
+        id: 13,
+        title: "Exercise 13: Sort Results",
+        category: "Developing Search Applications",
+        description: `Query the <code>products</code> index, sorting results by <code>price</code> in ascending order and returning the top 5 cheapest items.`
+      },
+      {
+        id: 14,
+        title: "Exercise 14: Pagination",
+        category: "Developing Search Applications",
+        description: `Implement pagination using <code>from</code> and <code>size</code> parameters to retrieve 10 products per page starting at page 2.`
+      },
+      {
+        id: 15,
+        title: "Exercise 15: Index Aliases",
+        category: "Developing Search Applications",
+        description: `Define an alias named <code>current-products</code> pointing to the <code>products</code> index and perform a query using this alias.`
+      },
+      {
+        id: 16,
+        title: "Exercise 16: Search Template",
+        category: "Developing Search Applications",
+        description: `Save a search template named <code>product-search-template</code> with parameters for dynamic category and price range filtering.`
+      },
+      {
+        id: 17,
+        title: "Exercise 17: Define a Mapping with Synonyms",
+        category: "Data Processing",
+        description: `Create an index named <code>synonym-products</code> where the <code>description</code> field uses a custom analyzer with a synonym token filter.`
+      },
+      {
+        id: 18,
+        title: "Exercise 18: Multi-fields",
+        category: "Data Processing",
+        description: `Define multi-fields for <code>name</code> in an index mapping: one analyzed as <code>text</code> and another sub-field as <code>keyword</code>.`
+      },
+      {
+        id: 19,
+        title: "Exercise 19: Reindexing",
+        category: "Data Processing",
+        description: `Use the Reindex API to copy data from index <code>old-products</code> to <code>new-products</code>.`
+      },
+      {
+        id: 20,
+        title: "Exercise 20: Ingest Pipeline",
+        category: "Data Processing",
+        description: `Define an ingest pipeline named <code>check-expensive</code> that uses a Painless script to set <code>is_expensive = true</code> if <code>price > 500</code>.`
+      },
+      {
+        id: 21,
+        title: "Exercise 21: Diagnose Shard Issues",
+        category: "Cluster Management",
+        description: `Check cluster health API, diagnose unassigned shards on the cluster, and reallocate or repair cluster health to green/yellow.`
+      },
+      {
+        id: 22,
+        title: "Exercise 22: Backup and Restore",
+        category: "Cluster Management",
+        description: `Register a snapshot repository <code>my_backup</code>, create a snapshot of <code>products</code>, and demonstrate index restoration.`
+      },
+      {
+        id: 23,
+        title: "Exercise 23: Cross-Cluster Replication",
+        category: "Cluster Management",
+        description: `Set up Cross-Cluster Replication (CCR) following rule to replicate index <code>products</code> from cluster 1 to cluster 2.`
+      }
+    ];
+
+    let currentQ = 0;
+    let timerSeconds = 7200; // 2 hours
+
+    function initUI() {
+      // Build Q list buttons
+      const listEl = document.getElementById('q-list');
+      listEl.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'q-btn' + (idx === 0 ? ' active' : '');
+        btn.innerText = idx + 1;
+        btn.id = `qbtn-${idx}`;
+        btn.onclick = () => selectQuestion(idx);
+        listEl.appendChild(btn);
+      });
+
+      renderQuestion(0);
+      startTimer();
+    }
+
+    function renderQuestion(idx) {
+      currentQ = idx;
+      const q = questions[idx];
+      document.getElementById('q-title').innerText = `Exercise ${q.id} of ${questions.length}`;
+      document.getElementById('q-category').innerText = q.category;
+
+      let html = `<h3>${q.title}</h3><div>${q.description}</div>`;
+      if (q.datasetNote) {
+        html += `<div class="dataset-info">📁 <strong>Dataset Info:</strong> ${q.datasetNote}</div>`;
+      }
+      document.getElementById('q-body').innerHTML = html;
+
+      // Update active btn
+      document.querySelectorAll('.q-btn').forEach((b, i) => {
+        b.classList.toggle('active', i === idx);
+      });
+
+      // Update Nav buttons
+      document.getElementById('btn-prev').disabled = (idx === 0);
+      document.getElementById('btn-next').disabled = (idx === questions.length - 1);
+    }
+
+    function selectQuestion(idx) {
+      renderQuestion(idx);
+    }
+
+    function changeQuestion(delta) {
+      const nextIdx = currentQ + delta;
+      if (nextIdx >= 0 && nextIdx < questions.length) {
+        renderQuestion(nextIdx);
+      }
+    }
+
+    function switchTab(tab) {
+      document.getElementById('tab-term-btn').classList.toggle('active', tab === 'terminal');
+      document.getElementById('tab-nav-btn').classList.toggle('active', tab === 'navigator');
+      document.getElementById('pane-terminal').classList.toggle('active', tab === 'terminal');
+      document.getElementById('pane-navigator').classList.toggle('active', tab === 'navigator');
+    }
+
+    function navGo(target) {
+      const iframe = document.getElementById('nav-iframe');
+      const urlInput = document.getElementById('nav-url-input');
+      if (target === 'docs') {
+        iframe.src = "/docs-proxy/";
+        urlInput.value = "https://www.elastic.co/guide/en/elasticsearch/reference/8.13/index.html";
+      } else if (target === 'kibana') {
+        iframe.src = "/kibana/";
+        urlInput.value = "http://localhost:5601";
+      }
+    }
+
+    function refreshNav() {
+      const iframe = document.getElementById('nav-iframe');
+      iframe.src = iframe.src;
+    }
+
+    function startTimer() {
+      const timerEl = document.getElementById('timer');
+      setInterval(() => {
+        if (timerSeconds <= 0) {
+          submitExam();
+          return;
+        }
+        timerSeconds--;
+        const h = String(Math.floor(timerSeconds / 3600)).padStart(2, '0');
+        const m = String(Math.floor((timerSeconds % 3600) / 60)).padStart(2, '0');
+        const s = String(timerSeconds % 60).padStart(2, '0');
+        timerEl.innerText = `${h}:${m}:${s}`;
+      }, 1000);
+    }
+
+    function confirmSubmitExam() {
+      if (confirm("Are you sure you want to finish and submit your exam now?")) {
+        submitExam();
+      }
+    }
+
+    function submitExam() {
+      document.getElementById('results-modal').classList.add('active');
+      document.getElementById('eval-loading').style.display = 'block';
+      document.getElementById('eval-results').style.display = 'none';
+
+      fetch('/api/evaluate')
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('eval-loading').style.display = 'none';
+          document.getElementById('eval-results').style.display = 'block';
+
+          const banner = document.getElementById('score-banner');
+          banner.innerText = `${data.score}% - ${data.score >= 70 ? 'PASSED' : 'FAILED'}`;
+          banner.className = `score-banner ${data.score >= 70 ? 'pass' : 'fail'}`;
+
+          const list = document.getElementById('eval-list');
+          list.innerHTML = '';
+          data.results.forEach(res => {
+            const item = document.createElement('div');
+            item.className = `eval-item ${res.passed ? 'pass' : 'fail'}`;
+            item.innerHTML = `
+              <div>
+                <strong>Ex ${res.id}: ${res.title}</strong>
+                <div style="font-size: 0.8rem; color: #94a3b8;">${res.message || ''}</div>
+              </div>
+              <span class="badge ${res.passed ? 'badge-pass' : 'badge-fail'}">${res.passed ? 'PASS' : 'FAIL'}</span>
+            `;
+            list.appendChild(item);
+
+            // Mark question button status
+            if (res.passed) {
+              const qb = document.getElementById(`qbtn-${res.id - 1}`);
+              if (qb) qb.classList.add('solved');
+            }
+          });
+        })
+        .catch(err => {
+          document.getElementById('eval-loading').innerText = "Error evaluating exam: " + err.message;
+        });
+    }
+
+    function closeModal() {
+      document.getElementById('results-modal').classList.remove('active');
+    }
+
+    window.onload = initUI;
+  </script>
+</body>
+</html>

@@ -1,6 +1,40 @@
-version: '3'
+version: '3.8'
 
 services:
+  web:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    container_name: es_exam_web
+    ports:
+      - "80:80"
+    depends_on:
+      - terminal
+      - evaluator
+      - kibana
+    networks:
+      - elastic_network
+    restart: unless-stopped
+
+  terminal:
+    build:
+      context: .
+      dockerfile: terminal/Dockerfile
+    container_name: es_exam_terminal
+    networks:
+      - elastic_network
+    restart: unless-stopped
+
+  evaluator:
+    build:
+      context: ./evaluator
+    container_name: es_exam_evaluator
+    networks:
+      - elastic_network
+    depends_on:
+      - elasticsearch1
+    restart: unless-stopped
+
   elasticsearch1:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
     container_name: elasticsearch1
@@ -13,8 +47,6 @@ services:
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - xpack.security.enabled=false
-    ports:
-      - "9200:9200"
     ulimits:
       memlock:
         soft: -1
@@ -23,7 +55,7 @@ services:
       - elastic_network
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://elasticsearch1:9200/_cluster/health || exit 1"]
-      interval: 30s
+      interval: 15s
       retries: 10
       timeout: 10s
     restart: unless-stopped
@@ -48,7 +80,7 @@ services:
       - elastic_network
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://elasticsearch2:9200/_cluster/health || exit 1"]
-      interval: 30s
+      interval: 15s
       retries: 10
       timeout: 10s
     restart: unless-stopped
@@ -73,7 +105,7 @@ services:
       - elastic_network
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://elasticsearch3:9200/_cluster/health || exit 1"]
-      interval: 30s
+      interval: 15s
       retries: 10
       timeout: 10s
     restart: unless-stopped
@@ -84,8 +116,8 @@ services:
     hostname: kibana
     environment:
       - ELASTICSEARCH_HOSTS=["http://elasticsearch1:9200","http://elasticsearch2:9200","http://elasticsearch3:9200"]
-    ports:
-      - "5601:5601"
+      - SERVER_BASEPATH=/kibana
+      - SERVER_REWRITEBASEPATH=true
     networks:
       - elastic_network
     depends_on:
@@ -100,4 +132,3 @@ services:
 networks:
   elastic_network:
     driver: bridge
-

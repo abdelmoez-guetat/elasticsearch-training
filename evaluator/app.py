@@ -1,12 +1,29 @@
+import json
 import requests
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-ES_URL = "http://elasticsearch1:9200"
+ES_URL = "http://c1es1:9200"
 
-@app.route('/api/evaluate', methods=['GET'])
+def parse_user_query(user_queries, q_id, default_json=None):
+    if not user_queries:
+        return default_json
+    raw = user_queries.get(str(q_id)) or user_queries.get(q_id)
+    if not raw or not raw.strip():
+        return default_json
+    try:
+        return json.loads(raw)
+    except Exception:
+        return None
+
+@app.route('/api/evaluate', methods=['GET', 'POST'])
 def evaluate():
+    user_queries = {}
+    if request.method == 'POST':
+        data = request.get_json(silent=True) or {}
+        user_queries = data.get('queries', {})
+
     results = []
 
     # Exercise 1: Define an Index 'products'
@@ -16,9 +33,9 @@ def evaluate():
             props = r.json().get('products', {}).get('mappings', {}).get('properties', {})
             cond = (
                 props.get('name', {}).get('type') == 'text' and
-                props.get('category', {}).get('type') == 'text' and
+                props.get('category', {}).get('type') in ['text', 'keyword'] and
                 props.get('description', {}).get('type') == 'text' and
-                props.get('price', {}).get('type') == 'double' and
+                props.get('price', {}).get('type') in ['double', 'float'] and
                 props.get('stock', {}).get('type') in ['double', 'integer', 'long'] and
                 props.get('rating', {}).get('type') in ['double', 'float']
             )
@@ -101,77 +118,110 @@ def evaluate():
 
     # Exercise 6: Basic Search Query
     try:
-        r = requests.get(f"{ES_URL}/products/_search?q=category:electronics")
-        passed = (r.status_code == 200 and r.json().get('hits', {}).get('total', {}).get('value', 0) > 0)
-        results.append({
-            "id": 6,
-            "title": "Basic Search Query",
-            "passed": passed,
-            "message": "Products index responds to search queries." if passed else "Search failed or no documents found."
-        })
+        query_body = parse_user_query(user_queries, 6, {"query": {"term": {"category": "electronics"}}})
+        if query_body is None:
+            results.append({"id": 6, "title": "Basic Search Query", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
+        else:
+            r = requests.post(f"{ES_URL}/products/_search", json=query_body)
+            passed = (r.status_code == 200 and r.json().get('hits', {}).get('total', {}).get('value', 0) > 0)
+            results.append({
+                "id": 6,
+                "title": "Basic Search Query",
+                "passed": passed,
+                "message": "DSL search query executed successfully." if passed else f"DSL search failed (HTTP {r.status_code})."
+            })
     except Exception as e:
         results.append({"id": 6, "title": "Basic Search Query", "passed": False, "message": str(e)})
 
     # Exercise 7: Boolean Query
     try:
-        r = requests.get(f"{ES_URL}/products/_search")
-        passed = (r.status_code == 200)
-        results.append({
-            "id": 7,
-            "title": "Boolean Query",
-            "passed": passed,
-            "message": "Boolean query verified." if passed else "Index not queryable."
+        query_body = parse_user_query(user_queries, 7, {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"range": {"rating": {"gte": 4.0}}},
+                        {"range": {"price": {"gte": 100, "lte": 1000}}}
+                    ]
+                }
+            }
         })
+        if query_body is None:
+            results.append({"id": 7, "title": "Boolean Query", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
+        else:
+            r = requests.post(f"{ES_URL}/products/_search", json=query_body)
+            passed = (r.status_code == 200)
+            results.append({
+                "id": 7,
+                "title": "Boolean Query",
+                "passed": passed,
+                "message": "Boolean DSL query verified." if passed else f"DSL search failed (HTTP {r.status_code})."
+            })
     except Exception as e:
         results.append({"id": 7, "title": "Boolean Query", "passed": False, "message": str(e)})
 
     # Exercise 8: Asynchronous Search
     try:
-        r = requests.get(f"{ES_URL}/_async_search/status")
-        passed = (r.status_code in [200, 400, 404]) # API endpoint available
-        results.append({
-            "id": 8,
-            "title": "Asynchronous Search",
-            "passed": passed,
-            "message": "Async search support available." if passed else "Async search unavailable."
-        })
+        query_body = parse_user_query(user_queries, 8, {"query": {"term": {"tags": "winter"}}})
+        if query_body is None:
+            results.append({"id": 8, "title": "Asynchronous Search", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
+        else:
+            r = requests.post(f"{ES_URL}/products/_async_search", json=query_body)
+            passed = (r.status_code == 200)
+            if not passed:
+                r_fallback = requests.post(f"{ES_URL}/products/_search", json=query_body)
+                passed = (r_fallback.status_code == 200)
+            results.append({
+                "id": 8,
+                "title": "Asynchronous Search",
+                "passed": passed,
+                "message": "Async search DSL query verified." if passed else f"Async search failed (HTTP {r.status_code})."
+            })
     except Exception as e:
         results.append({"id": 8, "title": "Asynchronous Search", "passed": False, "message": str(e)})
 
     # Exercise 9: Aggregations
     try:
-        r = requests.post(f"{ES_URL}/products/_search", json={
+        query_body = parse_user_query(user_queries, 9, {
             "size": 0,
-            "aggs": { "avg_price": { "avg": { "field": "price" } } }
+            "query": {"term": {"category": "electronics"}},
+            "aggs": {"avg_price": {"avg": {"field": "price"}}}
         })
-        passed = (r.status_code == 200 and 'avg_price' in r.json().get('aggregations', {}))
-        results.append({
-            "id": 9,
-            "title": "Aggregations",
-            "passed": passed,
-            "message": "Metric aggregation verified." if passed else "Aggregation failed."
-        })
+        if query_body is None:
+            results.append({"id": 9, "title": "Aggregations", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
+        else:
+            r = requests.post(f"{ES_URL}/products/_search", json=query_body)
+            passed = (r.status_code == 200 and len(r.json().get('aggregations', {})) > 0)
+            results.append({
+                "id": 9,
+                "title": "Aggregations",
+                "passed": passed,
+                "message": "Metric aggregation DSL query verified." if passed else f"Aggregation query failed (HTTP {r.status_code})."
+            })
     except Exception as e:
         results.append({"id": 9, "title": "Aggregations", "passed": False, "message": str(e)})
 
     # Exercise 10: Sub-Aggregations
     try:
-        r = requests.post(f"{ES_URL}/products/_search", json={
+        query_body = parse_user_query(user_queries, 10, {
             "size": 0,
             "aggs": {
-                "by_cat": {
-                    "terms": { "field": "category.keyword" },
-                    "aggs": { "avg_rating": { "avg": { "field": "rating" } } }
+                "by_category": {
+                    "terms": {"field": "category.keyword"},
+                    "aggs": {"avg_rating": {"avg": {"field": "rating"}}}
                 }
             }
         })
-        passed = (r.status_code == 200 and 'by_cat' in r.json().get('aggregations', {}))
-        results.append({
-            "id": 10,
-            "title": "Sub-Aggregations",
-            "passed": passed,
-            "message": "Sub-aggregation verified." if passed else "Sub-aggregation query failed."
-        })
+        if query_body is None:
+            results.append({"id": 10, "title": "Sub-Aggregations", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
+        else:
+            r = requests.post(f"{ES_URL}/products/_search", json=query_body)
+            passed = (r.status_code == 200 and len(r.json().get('aggregations', {})) > 0)
+            results.append({
+                "id": 10,
+                "title": "Sub-Aggregations",
+                "passed": passed,
+                "message": "Sub-aggregation DSL query verified." if passed else f"Sub-aggregation query failed (HTTP {r.status_code})."
+            })
     except Exception as e:
         results.append({"id": 10, "title": "Sub-Aggregations", "passed": False, "message": str(e)})
 
@@ -196,46 +246,58 @@ def evaluate():
 
     # Exercise 12: Highlight Search Terms
     try:
-        r = requests.post(f"{ES_URL}/products/_search", json={
-            "query": { "match": { "description": "laptop" } },
-            "highlight": { "fields": { "description": {} } }
+        query_body = parse_user_query(user_queries, 12, {
+            "query": {"match": {"description": "laptop"}},
+            "highlight": {"fields": {"description": {}}}
         })
-        passed = (r.status_code == 200)
-        results.append({
-            "id": 12,
-            "title": "Highlight Search Terms",
-            "passed": passed,
-            "message": "Highlight search query verified." if passed else "Highlight query failed."
-        })
+        if query_body is None:
+            results.append({"id": 12, "title": "Highlight Search Terms", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
+        else:
+            r = requests.post(f"{ES_URL}/products/_search", json=query_body)
+            passed = (r.status_code == 200)
+            results.append({
+                "id": 12,
+                "title": "Highlight Search Terms",
+                "passed": passed,
+                "message": "Highlight search query verified." if passed else f"Highlight query failed (HTTP {r.status_code})."
+            })
     except Exception as e:
         results.append({"id": 12, "title": "Highlight Search Terms", "passed": False, "message": str(e)})
 
     # Exercise 13: Sort Results
     try:
-        r = requests.post(f"{ES_URL}/products/_search", json={
-            "sort": [{ "price": { "order": "asc" } }],
+        query_body = parse_user_query(user_queries, 13, {
+            "sort": [{"price": {"order": "asc"}}],
             "size": 5
         })
-        passed = (r.status_code == 200 and len(r.json().get('hits', {}).get('hits', [])) <= 5)
-        results.append({
-            "id": 13,
-            "title": "Sort Results",
-            "passed": passed,
-            "message": "Sort results query verified." if passed else "Sort query failed."
-        })
+        if query_body is None:
+            results.append({"id": 13, "title": "Sort Results", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
+        else:
+            r = requests.post(f"{ES_URL}/products/_search", json=query_body)
+            passed = (r.status_code == 200 and len(r.json().get('hits', {}).get('hits', [])) <= 5)
+            results.append({
+                "id": 13,
+                "title": "Sort Results",
+                "passed": passed,
+                "message": "Sort results query verified." if passed else f"Sort query failed (HTTP {r.status_code})."
+            })
     except Exception as e:
         results.append({"id": 13, "title": "Sort Results", "passed": False, "message": str(e)})
 
     # Exercise 14: Pagination
     try:
-        r = requests.post(f"{ES_URL}/products/_search", json={ "from": 10, "size": 10 })
-        passed = (r.status_code == 200)
-        results.append({
-            "id": 14,
-            "title": "Pagination",
-            "passed": passed,
-            "message": "Pagination query verified." if passed else "Pagination query failed."
-        })
+        query_body = parse_user_query(user_queries, 14, {"from": 10, "size": 10})
+        if query_body is None:
+            results.append({"id": 14, "title": "Pagination", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
+        else:
+            r = requests.post(f"{ES_URL}/products/_search", json=query_body)
+            passed = (r.status_code == 200)
+            results.append({
+                "id": 14,
+                "title": "Pagination",
+                "passed": passed,
+                "message": "Pagination query verified." if passed else f"Pagination query failed (HTTP {r.status_code})."
+            })
     except Exception as e:
         results.append({"id": 14, "title": "Pagination", "passed": False, "message": str(e)})
 

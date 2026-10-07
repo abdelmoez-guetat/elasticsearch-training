@@ -22,6 +22,11 @@ services:
       context: .
       dockerfile: terminal/Dockerfile
     container_name: es_exam_terminal
+    extra_hosts:
+      - "cs1es1:10.8.0.2"
+      - "cs1es2:10.8.0.3"
+      - "cs1es3:10.8.0.4"
+      - "cs2es1:10.8.1.2"
     networks:
       global_network:
         ipv4_address: "10.8.0.100"

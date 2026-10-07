@@ -37,19 +37,17 @@ RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
 COPY ssh_keys/id_rsa /root/.ssh/id_rsa
 RUN chmod 600 /root/.ssh/id_rsa
 
-RUN echo "Host c1es1 cs1es1\n  HostName c1es1\n  User root\n  StrictHostKeyChecking no\n  UserKnownHostsFile /dev/null\n\nHost c1es2 cs1es2\n  HostName c1es2\n  User root\n  StrictHostKeyChecking no\n  UserKnownHostsFile /dev/null\n\nHost c1es3 cs1es3\n  HostName c1es3\n  User root\n  StrictHostKeyChecking no\n  UserKnownHostsFile /dev/null\n\nHost c2es1 cs2es1 c2es1\n  HostName c2es1\n  User root\n  StrictHostKeyChecking no\n  UserKnownHostsFile /dev/null\n" > /root/.ssh/config && chmod 600 /root/.ssh/config
-
-# Add /etc/hosts entries on startup via wrapper or bashrc
-RUN echo "10.8.0.2 c1es1 cs1es1" >> /etc/hosts && \
-    echo "10.8.0.3 c1es2 cs1es2" >> /etc/hosts && \
-    echo "10.8.0.4 c1es3 cs1es3" >> /etc/hosts && \
-    echo "10.8.1.2 c2es1 cs2es1" >> /etc/hosts
+RUN echo "Host c1es1 cs1es1\n  HostName c1es1\n  User root\n  StrictHostKeyChecking no\n  UserKnownHostsFile /dev/null\n\nHost c1es2 cs1es2\n  HostName c1es2\n  User root\n  StrictHostKeyChecking no\n  UserKnownHostsFile /dev/null\n\nHost c1es3 cs1es3\n  HostName c1es3\n  User root\n  StrictHostKeyChecking no\n  UserKnownHostsFile /dev/null\n\nHost c2es1 cs2es1\n  HostName c2es1\n  User root\n  StrictHostKeyChecking no\n  UserKnownHostsFile /dev/null\n" > /root/.ssh/config && chmod 600 /root/.ssh/config
 
 # Configure bash prompt and aliases
 RUN echo "alias c1es1='curl http://c1es1:9200'" >> /root/.bashrc && \
+    echo "alias cs1es1='curl http://c1es1:9200'" >> /root/.bashrc && \
     echo "alias c1es2='curl http://c1es2:9200'" >> /root/.bashrc && \
+    echo "alias cs1es2='curl http://c1es2:9200'" >> /root/.bashrc && \
     echo "alias c1es3='curl http://c1es3:9200'" >> /root/.bashrc && \
+    echo "alias cs1es3='curl http://c1es3:9200'" >> /root/.bashrc && \
     echo "alias c2es1='curl http://c2es1:9200'" >> /root/.bashrc && \
+    echo "alias cs2es1='curl http://c2es1:9200'" >> /root/.bashrc && \
     echo 'PS1="\[\e[32m\]candidate@elasticsearch-exam-node\[\e[m\]:\[\e[34m\]\w\[\e[m\]\$ "' >> /root/.bashrc
 
 EXPOSE 7681

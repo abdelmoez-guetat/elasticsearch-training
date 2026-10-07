@@ -26,6 +26,9 @@ RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/
 COPY elasticsearch/elasticsearch-ssh-entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+# Create backup folder
+RUN mkdir /mnt/backup
+
 USER elasticsearch
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

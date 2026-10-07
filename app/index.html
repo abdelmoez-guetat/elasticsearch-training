@@ -64,7 +64,7 @@
 
     /* Navigator Browser Bar */
     .nav-bar { height: 38px; background: #1e293b; border-bottom: 1px solid #334155; display: flex; align-items: center; padding: 0 10px; gap: 8px; }
-    .nav-btn { background: #334155; border: none; color: #e2e8f0; width: 26px; height: 26px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .nav-btn { background: #334155; border: none; color: #e2e8f0; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.82rem; font-weight: 600; display: flex; align-items: center; gap: 4px; }
     .nav-btn:hover { background: #475569; }
     .nav-url { flex: 1; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 4px 12px; border-radius: 4px; font-size: 0.85rem; font-family: monospace; }
 
@@ -151,7 +151,8 @@
         <div class="pane-content" id="pane-navigator">
           <div class="nav-bar">
             <button class="nav-btn" onclick="navGo('docs')">📚 Docs Home</button>
-            <button class="nav-btn" onclick="navGo('kibana')">📊 Kibana</button>
+            <button class="nav-btn" onclick="navGo('kibana1')">📊 Kibana 1</button>
+            <button class="nav-btn" onclick="navGo('kibana2')">📊 Kibana 2</button>
             <input type="text" class="nav-url" id="nav-url-input" readonly value="https://www.elastic.co/guide/en/elasticsearch/reference/8.13/index.html">
             <button class="nav-btn" onclick="refreshNav()">🔄</button>
           </div>
@@ -464,9 +465,12 @@
       if (target === 'docs') {
         iframe.src = "/docs-proxy/";
         urlInput.value = "https://www.elastic.co/guide/en/elasticsearch/reference/8.13/index.html";
-      } else if (target === 'kibana') {
+      } else if (target === 'kibana1') {
         iframe.src = "/kibana/";
-        urlInput.value = "http://localhost:5601";
+        urlInput.value = "http://localhost:15601";
+      } else if (target === 'kibana2') {
+        iframe.src = "/kibana-c2/";
+        urlInput.value = "http://localhost:25601";
       }
     }
 

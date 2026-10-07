@@ -131,6 +131,8 @@ services:
     environment:
       - ELASTICSEARCH_HOSTS=["http://c1es1:9200","http://c1es2:9200","http://c1es3:9200"]
       - NODE_OPTIONS=--max-old-space-size=384
+      - SERVER_BASEPATH=/kibana
+      - SERVER_REWRITEBASEPATH=true
     depends_on:
       c1es1:
         condition: service_healthy
@@ -162,6 +164,8 @@ services:
     environment:
       - ELASTICSEARCH_HOSTS=["http://c2es1:9200"]
       - NODE_OPTIONS=--max-old-space-size=384
+      - SERVER_BASEPATH=/kibana-c2
+      - SERVER_REWRITEBASEPATH=true
     depends_on:
       c2es1:
         condition: service_healthy

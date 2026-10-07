@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Elasticsearch Certification Simulator</title>
+
+  <!-- CodeMirror CSS and JS for JSON / DSL Syntax Highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; color: #f8fafc; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
@@ -31,11 +38,16 @@
     .q-btn.active { background: #0284c7; border-color: #38bdf8; color: white; }
     .q-btn.solved { background: #15803d; border-color: #22c55e; color: white; }
 
-    .question-body { flex: 1; padding: 20px; overflow-y: auto; font-size: 0.95rem; line-height: 1.6; color: #e2e8f0; }
-    .question-body h3 { color: #38bdf8; margin-bottom: 10px; border-bottom: 1px solid #334155; padding-bottom: 6px; }
+    .question-body { flex: 1; padding: 20px; overflow-y: auto; font-size: 0.95rem; line-height: 1.6; color: #e2e8f0; display: flex; flex-direction: column; gap: 12px; }
+    .question-body h3 { color: #38bdf8; margin-bottom: 6px; border-bottom: 1px solid #334155; padding-bottom: 6px; }
     .question-body pre { background: #1e293b; padding: 12px; border-radius: 6px; border: 1px solid #334155; overflow-x: auto; font-family: monospace; font-size: 0.88rem; margin: 10px 0; }
     .question-body code { background: #1e293b; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #fda4af; }
-    .dataset-info { margin-top: 20px; padding: 12px; background: #1e293b; border-left: 4px solid #38bdf8; border-radius: 4px; font-size: 0.85rem; }
+    .dataset-info { margin-top: 10px; padding: 12px; background: #1e293b; border-left: 4px solid #38bdf8; border-radius: 4px; font-size: 0.85rem; }
+
+    /* Query Editor Container */
+    .query-editor-section { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+    .query-editor-label { font-size: 0.85rem; font-weight: 600; color: #38bdf8; display: flex; align-items: center; justify-content: space-between; }
+    .CodeMirror { height: 220px; border-radius: 6px; font-family: monospace; font-size: 0.9rem; border: 1px solid #334155; }
 
     /* Question Footer Nav */
     .question-footer { padding: 12px 16px; background: #1e293b; border-top: 1px solid #334155; display: flex; justify-content: space-between; }
@@ -222,66 +234,88 @@
         id: 6,
         title: "Exercise 6: Basic Search Query",
         category: "Searching Data",
+        requiresQuery: true,
+        defaultQuery: `{\n  "query": {\n    "term": {\n      "category": "electronics"\n    }\n  }\n}`,
         description: `Write a search query on the <code>products</code> index to find all products that have the term "electronics" in the <code>category</code> field.`
       },
       {
         id: 7,
         title: "Exercise 7: Boolean Query",
         category: "Searching Data",
+        requiresQuery: true,
+        defaultQuery: `{\n  "query": {\n    "bool": {\n      "filter": [\n        { "range": { "rating": { "gte": 4.0 } } },\n        { "range": { "price": { "gte": 100, "lte": 1000 } } }\n      ]\n    }\n  }\n}`,
         description: `Create a search query on <code>products</code> filtering products with <code>rating >= 4.0</code> and <code>price</code> between 100 and 1000.`
       },
       {
         id: 8,
         title: "Exercise 8: Asynchronous Search",
         category: "Searching Data",
+        requiresQuery: true,
+        defaultQuery: `{\n  "query": {\n    "term": {\n      "tags": "winter"\n    }\n  }\n}`,
         description: `Write and submit an asynchronous search request to retrieve products where <code>tags</code> contains the keyword "winter".`
       },
       {
         id: 9,
         title: "Exercise 9: Aggregations",
         category: "Searching Data",
+        requiresQuery: true,
+        defaultQuery: `{\n  "size": 0,\n  "query": {\n    "term": { "category": "electronics" }\n  },\n  "aggs": {\n    "avg_price": {\n      "avg": { "field": "price" }\n    }\n  }\n}`,
         description: `Write a metric aggregation query to calculate the average price of all products in the "Electronics" category.`
       },
       {
         id: 10,
         title: "Exercise 10: Sub-Aggregations",
         category: "Searching Data",
+        requiresQuery: true,
+        defaultQuery: `{\n  "size": 0,\n  "aggs": {\n    "by_category": {\n      "terms": { "field": "category.keyword" },\n      "aggs": {\n        "avg_rating": { "avg": { "field": "rating" } }\n      }\n    }\n  }\n}`,
         description: `Write a bucket aggregation query to group products by <code>category</code> and calculate the average rating within each category.`
       },
       {
         id: 11,
         title: "Exercise 11: Cross-Cluster Search",
         category: "Searching Data",
+        requiresQuery: true,
+        defaultQuery: `{\n  "query": {\n    "match_all": {}\n  }\n}`,
         description: `Configure a remote cluster entry <code>remote_cluster</code> in Elasticsearch and write a search query spanning local and remote indices.`
       },
       {
         id: 12,
         title: "Exercise 12: Highlight Search Terms",
         category: "Developing Search Applications",
+        requiresQuery: true,
+        defaultQuery: `{\n  "query": {\n    "match": {\n      "description": "laptop"\n    }\n  },\n  "highlight": {\n    "fields": {\n      "description": {}\n    }\n  }\n}`,
         description: `Execute a search query on <code>products</code> that highlights the term "laptop" in the <code>description</code> field.`
       },
       {
         id: 13,
         title: "Exercise 13: Sort Results",
         category: "Developing Search Applications",
+        requiresQuery: true,
+        defaultQuery: `{\n  "sort": [\n    { "price": { "order": "asc" } }\n  ],\n  "size": 5\n}`,
         description: `Query the <code>products</code> index, sorting results by <code>price</code> in ascending order and returning the top 5 cheapest items.`
       },
       {
         id: 14,
         title: "Exercise 14: Pagination",
         category: "Developing Search Applications",
+        requiresQuery: true,
+        defaultQuery: `{\n  "from": 10,\n  "size": 10,\n  "query": {\n    "match_all": {}\n  }\n}`,
         description: `Implement pagination using <code>from</code> and <code>size</code> parameters to retrieve 10 products per page starting at page 2.`
       },
       {
         id: 15,
         title: "Exercise 15: Index Aliases",
         category: "Developing Search Applications",
+        requiresQuery: true,
+        defaultQuery: `{\n  "query": {\n    "match_all": {}\n  }\n}`,
         description: `Define an alias named <code>current-products</code> pointing to the <code>products</code> index and perform a query using this alias.`
       },
       {
         id: 16,
         title: "Exercise 16: Search Template",
         category: "Developing Search Applications",
+        requiresQuery: true,
+        defaultQuery: `{\n  "script": {\n    "lang": "mustache",\n    "source": {\n      "query": {\n        "term": { "category": "{{category}}" }\n      }\n    }\n  }\n}`,
         description: `Save a search template named <code>product-search-template</code> with parameters for dynamic category and price range filtering.`
       },
       {
@@ -330,6 +364,7 @@
 
     let currentQ = 0;
     let timerSeconds = 7200; // 2 hours
+    let codeEditor = null;
 
     function initUI() {
       // Build Q list buttons
@@ -358,7 +393,42 @@
       if (q.datasetNote) {
         html += `<div class="dataset-info">📁 <strong>Dataset Info:</strong> ${q.datasetNote}</div>`;
       }
+
+      if (q.requiresQuery) {
+        html += `
+          <div class="query-editor-section">
+            <div class="query-editor-label">
+              <span>🔍 Elasticsearch DSL Query Editor</span>
+              <span style="font-size: 0.75rem; color: #94a3b8;">Auto-saved to LocalStorage</span>
+            </div>
+            <textarea id="dsl-textarea"></textarea>
+          </div>
+        `;
+      }
+
       document.getElementById('q-body').innerHTML = html;
+
+      if (q.requiresQuery) {
+        const savedQuery = localStorage.getItem(`es_exam_q_${q.id}`) || q.defaultQuery || "{\n  \n}";
+        const textarea = document.getElementById('dsl-textarea');
+        textarea.value = savedQuery;
+
+        codeEditor = CodeMirror.fromTextArea(textarea, {
+          mode: { name: "javascript", json: true },
+          theme: "dracula",
+          lineNumbers: true,
+          matchBrackets: true,
+          autoCloseBrackets: true,
+          tabSize: 2
+        });
+
+        codeEditor.on('change', (cm) => {
+          const val = cm.getValue();
+          localStorage.setItem(`es_exam_q_${q.id}`, val);
+        });
+      } else {
+        codeEditor = null;
+      }
 
       // Update active btn
       document.querySelectorAll('.q-btn').forEach((b, i) => {
@@ -431,7 +501,19 @@
       document.getElementById('eval-loading').style.display = 'block';
       document.getElementById('eval-results').style.display = 'none';
 
-      fetch('/api/evaluate')
+      // Gather candidate DSL queries from LocalStorage
+      const userQueries = {};
+      questions.forEach(q => {
+        if (q.requiresQuery) {
+          userQueries[q.id] = localStorage.getItem(`es_exam_q_${q.id}`) || "";
+        }
+      });
+
+      fetch('/api/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ queries: userQueries })
+      })
         .then(res => res.json())
         .then(data => {
           document.getElementById('eval-loading').style.display = 'none';

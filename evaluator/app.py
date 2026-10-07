@@ -26,7 +26,24 @@ def evaluate():
 
     results = []
 
-    # Exercise 1: Define an Index 'products'
+    # Exercise 1: Diagnose Shard Issues (reordered to exercise 1)
+    try:
+        r = requests.get(f"{ES_URL}/_cluster/health")
+        passed = False
+        if r.status_code == 200:
+            status = r.json().get('status')
+            if status == 'green':
+                passed = True
+        results.append({
+            "id": 1,
+            "title": "Diagnose Shard Issues",
+            "passed": passed,
+            "message": f"Cluster status is green ({r.json().get('status')})." if passed else f"Cluster status is degraded ({r.json().get('status') if r.status_code == 200 else 'unreachable'})."
+        })
+    except Exception as e:
+        results.append({"id": 1, "title": "Diagnose Shard Issues", "passed": False, "message": str(e)})
+
+    # Exercise 2: Define an Index 'products'
     try:
         r = requests.get(f"{ES_URL}/products/_mapping")
         if r.status_code == 200:
@@ -40,17 +57,17 @@ def evaluate():
                 props.get('rating', {}).get('type') in ['double', 'float']
             )
             results.append({
-                "id": 1,
+                "id": 2,
                 "title": "Define an Index 'products'",
                 "passed": bool(cond),
                 "message": "Index 'products' exists with requested mappings." if cond else "Mapping mismatch for 'products'."
             })
         else:
-            results.append({"id": 1, "title": "Define an Index 'products'", "passed": False, "message": "Index 'products' not found."})
+            results.append({"id": 2, "title": "Define an Index 'products'", "passed": False, "message": "Index 'products' not found."})
     except Exception as e:
-        results.append({"id": 1, "title": "Define an Index 'products'", "passed": False, "message": str(e)})
+        results.append({"id": 2, "title": "Define an Index 'products'", "passed": False, "message": str(e)})
 
-    # Exercise 2: Define an Index Template 'products-*'
+    # Exercise 3: Define an Index Template 'products-*'
     try:
         r = requests.get(f"{ES_URL}/_index_template")
         passed = False
@@ -63,11 +80,11 @@ def evaluate():
                     passed = True
                     msg = f"Index template '{t.get('name')}' found for products-*."
                     break
-        results.append({"id": 2, "title": "Define Index Template", "passed": passed, "message": msg})
+        results.append({"id": 3, "title": "Define Index Template", "passed": passed, "message": msg})
     except Exception as e:
-        results.append({"id": 2, "title": "Define Index Template", "passed": False, "message": str(e)})
+        results.append({"id": 3, "title": "Define Index Template", "passed": False, "message": str(e)})
 
-    # Exercise 3: Dynamic Templates
+    # Exercise 4: Dynamic Templates
     try:
         r = requests.get(f"{ES_URL}/_template")
         r_index_tmpl = requests.get(f"{ES_URL}/_index_template")
@@ -76,15 +93,15 @@ def evaluate():
         if "_txt" in content_str and "dynamic_templates" in content_str:
             passed = True
         results.append({
-            "id": 3,
+            "id": 4,
             "title": "Dynamic Templates",
             "passed": passed,
             "message": "Dynamic template for *_txt fields detected." if passed else "No dynamic template for *_txt fields found."
         })
     except Exception as e:
-        results.append({"id": 3, "title": "Dynamic Templates", "passed": False, "message": str(e)})
+        results.append({"id": 4, "title": "Dynamic Templates", "passed": False, "message": str(e)})
 
-    # Exercise 4: ILM Policy
+    # Exercise 5: ILM Policy
     try:
         r = requests.get(f"{ES_URL}/_ilm/policy")
         passed = False
@@ -93,49 +110,49 @@ def evaluate():
             if any("sales" in k.lower() or "products" in k.lower() for k in policies.keys()):
                 passed = True
         results.append({
-            "id": 4,
+            "id": 5,
             "title": "Index Lifecycle Management (ILM)",
             "passed": passed,
             "message": "ILM policy configured." if passed else "No custom ILM policy found."
         })
     except Exception as e:
-        results.append({"id": 4, "title": "Index Lifecycle Management (ILM)", "passed": False, "message": str(e)})
+        results.append({"id": 5, "title": "Index Lifecycle Management (ILM)", "passed": False, "message": str(e)})
 
-    # Exercise 5: Data Stream
+    # Exercise 6: Data Stream
     try:
         r = requests.get(f"{ES_URL}/_data_stream")
         passed = False
         if r.status_code == 200 and len(r.json().get('data_streams', [])) > 0:
             passed = True
         results.append({
-            "id": 5,
+            "id": 6,
             "title": "Data Stream",
             "passed": passed,
             "message": "Data stream created." if passed else "No active data streams found."
         })
     except Exception as e:
-        results.append({"id": 5, "title": "Data Stream", "passed": False, "message": str(e)})
+        results.append({"id": 6, "title": "Data Stream", "passed": False, "message": str(e)})
 
-    # Exercise 6: Basic Search Query
+    # Exercise 7: Basic Search Query
     try:
-        query_body = parse_user_query(user_queries, 6, {"query": {"term": {"category": "electronics"}}})
+        query_body = parse_user_query(user_queries, 7, {"query": {"term": {"category": "electronics"}}})
         if query_body is None:
-            results.append({"id": 6, "title": "Basic Search Query", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
+            results.append({"id": 7, "title": "Basic Search Query", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
         else:
             r = requests.post(f"{ES_URL}/products/_search", json=query_body)
             passed = (r.status_code == 200 and r.json().get('hits', {}).get('total', {}).get('value', 0) > 0)
             results.append({
-                "id": 6,
+                "id": 7,
                 "title": "Basic Search Query",
                 "passed": passed,
                 "message": "DSL search query executed successfully." if passed else f"DSL search failed (HTTP {r.status_code})."
             })
     except Exception as e:
-        results.append({"id": 6, "title": "Basic Search Query", "passed": False, "message": str(e)})
+        results.append({"id": 7, "title": "Basic Search Query", "passed": False, "message": str(e)})
 
-    # Exercise 7: Boolean Query
+    # Exercise 8: Boolean Query
     try:
-        query_body = parse_user_query(user_queries, 7, {
+        query_body = parse_user_query(user_queries, 8, {
             "query": {
                 "bool": {
                     "filter": [
@@ -146,24 +163,24 @@ def evaluate():
             }
         })
         if query_body is None:
-            results.append({"id": 7, "title": "Boolean Query", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
+            results.append({"id": 8, "title": "Boolean Query", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
         else:
             r = requests.post(f"{ES_URL}/products/_search", json=query_body)
             passed = (r.status_code == 200)
             results.append({
-                "id": 7,
+                "id": 8,
                 "title": "Boolean Query",
                 "passed": passed,
                 "message": "Boolean DSL query verified." if passed else f"DSL search failed (HTTP {r.status_code})."
             })
     except Exception as e:
-        results.append({"id": 7, "title": "Boolean Query", "passed": False, "message": str(e)})
+        results.append({"id": 8, "title": "Boolean Query", "passed": False, "message": str(e)})
 
-    # Exercise 8: Asynchronous Search
+    # Exercise 9: Asynchronous Search
     try:
-        query_body = parse_user_query(user_queries, 8, {"query": {"term": {"tags": "winter"}}})
+        query_body = parse_user_query(user_queries, 9, {"query": {"term": {"tags": "winter"}}})
         if query_body is None:
-            results.append({"id": 8, "title": "Asynchronous Search", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
+            results.append({"id": 9, "title": "Asynchronous Search", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
         else:
             r = requests.post(f"{ES_URL}/products/_async_search", json=query_body)
             passed = (r.status_code == 200)
@@ -171,38 +188,38 @@ def evaluate():
                 r_fallback = requests.post(f"{ES_URL}/products/_search", json=query_body)
                 passed = (r_fallback.status_code == 200)
             results.append({
-                "id": 8,
+                "id": 9,
                 "title": "Asynchronous Search",
                 "passed": passed,
                 "message": "Async search DSL query verified." if passed else f"Async search failed (HTTP {r.status_code})."
             })
     except Exception as e:
-        results.append({"id": 8, "title": "Asynchronous Search", "passed": False, "message": str(e)})
+        results.append({"id": 9, "title": "Asynchronous Search", "passed": False, "message": str(e)})
 
-    # Exercise 9: Aggregations
+    # Exercise 10: Aggregations
     try:
-        query_body = parse_user_query(user_queries, 9, {
+        query_body = parse_user_query(user_queries, 10, {
             "size": 0,
             "query": {"term": {"category": "electronics"}},
             "aggs": {"avg_price": {"avg": {"field": "price"}}}
         })
         if query_body is None:
-            results.append({"id": 9, "title": "Aggregations", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
+            results.append({"id": 10, "title": "Aggregations", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
         else:
             r = requests.post(f"{ES_URL}/products/_search", json=query_body)
             passed = (r.status_code == 200 and len(r.json().get('aggregations', {})) > 0)
             results.append({
-                "id": 9,
+                "id": 10,
                 "title": "Aggregations",
                 "passed": passed,
                 "message": "Metric aggregation DSL query verified." if passed else f"Aggregation query failed (HTTP {r.status_code})."
             })
     except Exception as e:
-        results.append({"id": 9, "title": "Aggregations", "passed": False, "message": str(e)})
+        results.append({"id": 10, "title": "Aggregations", "passed": False, "message": str(e)})
 
-    # Exercise 10: Sub-Aggregations
+    # Exercise 11: Sub-Aggregations
     try:
-        query_body = parse_user_query(user_queries, 10, {
+        query_body = parse_user_query(user_queries, 11, {
             "size": 0,
             "aggs": {
                 "by_category": {
@@ -212,20 +229,20 @@ def evaluate():
             }
         })
         if query_body is None:
-            results.append({"id": 10, "title": "Sub-Aggregations", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
+            results.append({"id": 11, "title": "Sub-Aggregations", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
         else:
             r = requests.post(f"{ES_URL}/products/_search", json=query_body)
             passed = (r.status_code == 200 and len(r.json().get('aggregations', {})) > 0)
             results.append({
-                "id": 10,
+                "id": 11,
                 "title": "Sub-Aggregations",
                 "passed": passed,
                 "message": "Sub-aggregation DSL query verified." if passed else f"Sub-aggregation query failed (HTTP {r.status_code})."
             })
     except Exception as e:
-        results.append({"id": 10, "title": "Sub-Aggregations", "passed": False, "message": str(e)})
+        results.append({"id": 11, "title": "Sub-Aggregations", "passed": False, "message": str(e)})
 
-    # Exercise 11: Cross-Cluster Search
+    # Exercise 12: Cross-Cluster Search
     try:
         r = requests.get(f"{ES_URL}/_cluster/settings")
         passed = False
@@ -236,111 +253,111 @@ def evaluate():
             if persistent or transient:
                 passed = True
         results.append({
-            "id": 11,
+            "id": 12,
             "title": "Cross-Cluster Search",
             "passed": passed,
             "message": "Remote cluster entry configured." if passed else "No remote cluster settings configured."
         })
     except Exception as e:
-        results.append({"id": 11, "title": "Cross-Cluster Search", "passed": False, "message": str(e)})
+        results.append({"id": 12, "title": "Cross-Cluster Search", "passed": False, "message": str(e)})
 
-    # Exercise 12: Highlight Search Terms
+    # Exercise 13: Highlight Search Terms
     try:
-        query_body = parse_user_query(user_queries, 12, {
+        query_body = parse_user_query(user_queries, 13, {
             "query": {"match": {"description": "laptop"}},
             "highlight": {"fields": {"description": {}}}
         })
         if query_body is None:
-            results.append({"id": 12, "title": "Highlight Search Terms", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
+            results.append({"id": 13, "title": "Highlight Search Terms", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
         else:
             r = requests.post(f"{ES_URL}/products/_search", json=query_body)
             passed = (r.status_code == 200)
             results.append({
-                "id": 12,
+                "id": 13,
                 "title": "Highlight Search Terms",
                 "passed": passed,
                 "message": "Highlight search query verified." if passed else f"Highlight query failed (HTTP {r.status_code})."
             })
     except Exception as e:
-        results.append({"id": 12, "title": "Highlight Search Terms", "passed": False, "message": str(e)})
+        results.append({"id": 13, "title": "Highlight Search Terms", "passed": False, "message": str(e)})
 
-    # Exercise 13: Sort Results
+    # Exercise 14: Sort Results
     try:
-        query_body = parse_user_query(user_queries, 13, {
+        query_body = parse_user_query(user_queries, 14, {
             "sort": [{"price": {"order": "asc"}}],
             "size": 5
         })
         if query_body is None:
-            results.append({"id": 13, "title": "Sort Results", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
+            results.append({"id": 14, "title": "Sort Results", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
         else:
             r = requests.post(f"{ES_URL}/products/_search", json=query_body)
             passed = (r.status_code == 200 and len(r.json().get('hits', {}).get('hits', [])) <= 5)
             results.append({
-                "id": 13,
+                "id": 14,
                 "title": "Sort Results",
                 "passed": passed,
                 "message": "Sort results query verified." if passed else f"Sort query failed (HTTP {r.status_code})."
             })
     except Exception as e:
-        results.append({"id": 13, "title": "Sort Results", "passed": False, "message": str(e)})
+        results.append({"id": 14, "title": "Sort Results", "passed": False, "message": str(e)})
 
-    # Exercise 14: Pagination
+    # Exercise 15: Pagination
     try:
-        query_body = parse_user_query(user_queries, 14, {"from": 10, "size": 10})
+        query_body = parse_user_query(user_queries, 15, {"from": 10, "size": 10})
         if query_body is None:
-            results.append({"id": 14, "title": "Pagination", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
+            results.append({"id": 15, "title": "Pagination", "passed": False, "message": "Invalid JSON syntax in DSL query editor."})
         else:
             r = requests.post(f"{ES_URL}/products/_search", json=query_body)
             passed = (r.status_code == 200)
             results.append({
-                "id": 14,
+                "id": 15,
                 "title": "Pagination",
                 "passed": passed,
                 "message": "Pagination query verified." if passed else f"Pagination query failed (HTTP {r.status_code})."
             })
     except Exception as e:
-        results.append({"id": 14, "title": "Pagination", "passed": False, "message": str(e)})
+        results.append({"id": 15, "title": "Pagination", "passed": False, "message": str(e)})
 
-    # Exercise 15: Index Aliases
+    # Exercise 16: Index Aliases
     try:
         r = requests.get(f"{ES_URL}/_alias/current-products")
         passed = (r.status_code == 200)
         results.append({
-            "id": 15,
+            "id": 16,
             "title": "Index Aliases",
             "passed": passed,
             "message": "Alias 'current-products' exists." if passed else "Alias 'current-products' not found."
         })
     except Exception as e:
-        results.append({"id": 15, "title": "Index Aliases", "passed": False, "message": str(e)})
+        results.append({"id": 16, "title": "Index Aliases", "passed": False, "message": str(e)})
 
-    # Exercise 16: Search Template
+    # Exercise 17: Search Template
     try:
         r = requests.get(f"{ES_URL}/_scripts/product-search-template")
         passed = (r.status_code == 200)
         results.append({
-            "id": 16,
+            "id": 17,
             "title": "Search Template",
             "passed": passed,
             "message": "Search template 'product-search-template' exists." if passed else "Search template not found."
         })
     except Exception as e:
-        results.append({"id": 16, "title": "Search Template", "passed": False, "message": str(e)})
+        results.append({"id": 17, "title": "Search Template", "passed": False, "message": str(e)})
 
-    # Exercise 17: Mapping with Synonyms
+    # Exercise 18: Mapping with Synonyms
     try:
         r = requests.get(f"{ES_URL}/synonym-products/_mapping")
         passed = (r.status_code == 200)
         results.append({
-            "id": 17,
+            "id": 18,
             "title": "Mapping with Synonyms",
             "passed": passed,
             "message": "Index 'synonym-products' exists." if passed else "Index 'synonym-products' not found."
         })
     except Exception as e:
-        results.append({"id": 17, "title": "Mapping with Synonyms", "passed": False, "message": str(e)})
+        results.append({"id": 18, "title": "Mapping with Synonyms", "passed": False, "message": str(e)})
 
-    # Exercise 18: Multi-fields
+    # Exercise 19: Multi-fields
     try:
         r = requests.get(f"{ES_URL}/products/_mapping")
         passed = False
@@ -349,56 +366,39 @@ def evaluate():
             if 'fields' in name_prop:
                 passed = True
         results.append({
-            "id": 18,
+            "id": 19,
             "title": "Multi-fields",
             "passed": passed,
             "message": "Multi-fields defined on 'name' property." if passed else "No sub-fields defined on 'name'."
         })
     except Exception as e:
-        results.append({"id": 18, "title": "Multi-fields", "passed": False, "message": str(e)})
+        results.append({"id": 19, "title": "Multi-fields", "passed": False, "message": str(e)})
 
-    # Exercise 19: Reindexing
+    # Exercise 20: Reindexing
     try:
         r = requests.get(f"{ES_URL}/new-products/_count")
         passed = (r.status_code == 200 and r.json().get('count', 0) > 0)
         results.append({
-            "id": 19,
+            "id": 20,
             "title": "Reindexing",
             "passed": passed,
             "message": "Index 'new-products' contains reindexed docs." if passed else "Index 'new-products' not found or empty."
         })
     except Exception as e:
-        results.append({"id": 19, "title": "Reindexing", "passed": False, "message": str(e)})
+        results.append({"id": 20, "title": "Reindexing", "passed": False, "message": str(e)})
 
-    # Exercise 20: Ingest Pipeline
+    # Exercise 21: Ingest Pipeline
     try:
         r = requests.get(f"{ES_URL}/_ingest/pipeline/check-expensive")
         passed = (r.status_code == 200)
         results.append({
-            "id": 20,
+            "id": 21,
             "title": "Ingest Pipeline",
             "passed": passed,
             "message": "Ingest pipeline 'check-expensive' exists." if passed else "Ingest pipeline 'check-expensive' not found."
         })
     except Exception as e:
-        results.append({"id": 20, "title": "Ingest Pipeline", "passed": False, "message": str(e)})
-
-    # Exercise 21: Diagnose Shard Issues
-    try:
-        r = requests.get(f"{ES_URL}/_cluster/health")
-        passed = False
-        if r.status_code == 200:
-            status = r.json().get('status')
-            if status in ['green', 'yellow']:
-                passed = True
-        results.append({
-            "id": 21,
-            "title": "Diagnose Shard Issues",
-            "passed": passed,
-            "message": f"Cluster status is healthy ({r.json().get('status')})." if passed else "Cluster status degraded."
-        })
-    except Exception as e:
-        results.append({"id": 21, "title": "Diagnose Shard Issues", "passed": False, "message": str(e)})
+        results.append({"id": 21, "title": "Ingest Pipeline", "passed": False, "message": str(e)})
 
     # Exercise 22: Backup and Restore
     try:

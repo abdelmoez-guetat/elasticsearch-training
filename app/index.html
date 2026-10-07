@@ -191,7 +191,13 @@
     const questions = [
       {
         id: 1,
-        title: "Exercise 1: Define an Index",
+        title: "Exercise 1: Diagnose Shard Issues",
+        category: "Cluster Management",
+        description: `Check cluster health API, diagnose unassigned shards on the cluster, and reallocate or repair cluster health to green.`
+      },
+      {
+        id: 2,
+        title: "Exercise 2: Define an Index",
         category: "Data Management",
         description: `Create an index named <code>products</code> with a custom mapping where:
         <ul>
@@ -201,8 +207,8 @@
         datasetNote: "Initial dataset files available in shell working directory: <code>/datasets/products.ndjson</code>"
       },
       {
-        id: 2,
-        title: "Exercise 2: Define an Index Template",
+        id: 3,
+        title: "Exercise 3: Define an Index Template",
         category: "Data Management",
         description: `Create an Elasticsearch index template for indices matching the pattern <code>products-*</code>. The template should include mappings and settings specifying:
         <ul>
@@ -214,140 +220,134 @@
         </ul>`
       },
       {
-        id: 3,
-        title: "Exercise 3: Dynamic Templates",
+        id: 4,
+        title: "Exercise 4: Dynamic Templates",
         category: "Data Management",
         description: `Create a dynamic template that applies to fields ending in <code>_txt</code>, treating them as analyzed <code>text</code> fields.`
       },
       {
-        id: 4,
-        title: "Exercise 4: Index Lifecycle Management",
+        id: 5,
+        title: "Exercise 5: Index Lifecycle Management",
         category: "Data Management",
         description: `Define an ILM policy named <code>sales-ilm-policy</code> for time-series indices with hot, warm, and cold storage phases.`
       },
       {
-        id: 5,
-        title: "Exercise 5: Data Stream",
+        id: 6,
+        title: "Exercise 6: Data Stream",
         category: "Data Management",
         description: `Create an index template named <code>orders-template</code> configured for a data stream <code>orders-stream-*</code> with appropriate timestamp field mapping.`
       },
       {
-        id: 6,
-        title: "Exercise 6: Basic Search Query",
+        id: 7,
+        title: "Exercise 7: Basic Search Query",
         category: "Searching Data",
         requiresQuery: true,
         defaultQuery: `{\n  "query": {\n    "term": {\n      "category": "electronics"\n    }\n  }\n}`,
         description: `Write a search query on the <code>products</code> index to find all products that have the term "electronics" in the <code>category</code> field.`
       },
       {
-        id: 7,
-        title: "Exercise 7: Boolean Query",
+        id: 8,
+        title: "Exercise 8: Boolean Query",
         category: "Searching Data",
         requiresQuery: true,
         defaultQuery: `{\n  "query": {\n    "bool": {\n      "filter": [\n        { "range": { "rating": { "gte": 4.0 } } },\n        { "range": { "price": { "gte": 100, "lte": 1000 } } }\n      ]\n    }\n  }\n}`,
         description: `Create a search query on <code>products</code> filtering products with <code>rating >= 4.0</code> and <code>price</code> between 100 and 1000.`
       },
       {
-        id: 8,
-        title: "Exercise 8: Asynchronous Search",
+        id: 9,
+        title: "Exercise 9: Asynchronous Search",
         category: "Searching Data",
         requiresQuery: true,
         defaultQuery: `{\n  "query": {\n    "term": {\n      "tags": "winter"\n    }\n  }\n}`,
         description: `Write and submit an asynchronous search request to retrieve products where <code>tags</code> contains the keyword "winter".`
       },
       {
-        id: 9,
-        title: "Exercise 9: Aggregations",
+        id: 10,
+        title: "Exercise 10: Aggregations",
         category: "Searching Data",
         requiresQuery: true,
         defaultQuery: `{\n  "size": 0,\n  "query": {\n    "term": { "category": "electronics" }\n  },\n  "aggs": {\n    "avg_price": {\n      "avg": { "field": "price" }\n    }\n  }\n}`,
         description: `Write a metric aggregation query to calculate the average price of all products in the "Electronics" category.`
       },
       {
-        id: 10,
-        title: "Exercise 10: Sub-Aggregations",
+        id: 11,
+        title: "Exercise 11: Sub-Aggregations",
         category: "Searching Data",
         requiresQuery: true,
         defaultQuery: `{\n  "size": 0,\n  "aggs": {\n    "by_category": {\n      "terms": { "field": "category.keyword" },\n      "aggs": {\n        "avg_rating": { "avg": { "field": "rating" } }\n      }\n    }\n  }\n}`,
         description: `Write a bucket aggregation query to group products by <code>category</code> and calculate the average rating within each category.`
       },
       {
-        id: 11,
-        title: "Exercise 11: Cross-Cluster Search",
+        id: 12,
+        title: "Exercise 12: Cross-Cluster Search",
         category: "Searching Data",
         requiresQuery: true,
         defaultQuery: `{\n  "query": {\n    "match_all": {}\n  }\n}`,
         description: `Configure a remote cluster entry <code>remote_cluster</code> in Elasticsearch and write a search query spanning local and remote indices.`
       },
       {
-        id: 12,
-        title: "Exercise 12: Highlight Search Terms",
+        id: 13,
+        title: "Exercise 13: Highlight Search Terms",
         category: "Developing Search Applications",
         requiresQuery: true,
         defaultQuery: `{\n  "query": {\n    "match": {\n      "description": "laptop"\n    }\n  },\n  "highlight": {\n    "fields": {\n      "description": {}\n    }\n  }\n}`,
         description: `Execute a search query on <code>products</code> that highlights the term "laptop" in the <code>description</code> field.`
       },
       {
-        id: 13,
-        title: "Exercise 13: Sort Results",
+        id: 14,
+        title: "Exercise 14: Sort Results",
         category: "Developing Search Applications",
         requiresQuery: true,
         defaultQuery: `{\n  "sort": [\n    { "price": { "order": "asc" } }\n  ],\n  "size": 5\n}`,
         description: `Query the <code>products</code> index, sorting results by <code>price</code> in ascending order and returning the top 5 cheapest items.`
       },
       {
-        id: 14,
-        title: "Exercise 14: Pagination",
+        id: 15,
+        title: "Exercise 15: Pagination",
         category: "Developing Search Applications",
         requiresQuery: true,
         defaultQuery: `{\n  "from": 10,\n  "size": 10,\n  "query": {\n    "match_all": {}\n  }\n}`,
         description: `Implement pagination using <code>from</code> and <code>size</code> parameters to retrieve 10 products per page starting at page 2.`
       },
       {
-        id: 15,
-        title: "Exercise 15: Index Aliases",
+        id: 16,
+        title: "Exercise 16: Index Aliases",
         category: "Developing Search Applications",
         requiresQuery: true,
         defaultQuery: `{\n  "query": {\n    "match_all": {}\n  }\n}`,
         description: `Define an alias named <code>current-products</code> pointing to the <code>products</code> index and perform a query using this alias.`
       },
       {
-        id: 16,
-        title: "Exercise 16: Search Template",
+        id: 17,
+        title: "Exercise 17: Search Template",
         category: "Developing Search Applications",
         requiresQuery: true,
         defaultQuery: `{\n  "script": {\n    "lang": "mustache",\n    "source": {\n      "query": {\n        "term": { "category": "{{category}}" }\n      }\n    }\n  }\n}`,
         description: `Save a search template named <code>product-search-template</code> with parameters for dynamic category and price range filtering.`
       },
       {
-        id: 17,
-        title: "Exercise 17: Define a Mapping with Synonyms",
+        id: 18,
+        title: "Exercise 18: Define a Mapping with Synonyms",
         category: "Data Processing",
         description: `Create an index named <code>synonym-products</code> where the <code>description</code> field uses a custom analyzer with a synonym token filter.`
       },
       {
-        id: 18,
-        title: "Exercise 18: Multi-fields",
+        id: 19,
+        title: "Exercise 19: Multi-fields",
         category: "Data Processing",
         description: `Define multi-fields for <code>name</code> in an index mapping: one analyzed as <code>text</code> and another sub-field as <code>keyword</code>.`
       },
       {
-        id: 19,
-        title: "Exercise 19: Reindexing",
+        id: 20,
+        title: "Exercise 20: Reindexing",
         category: "Data Processing",
         description: `Use the Reindex API to copy data from index <code>old-products</code> to <code>new-products</code>.`
       },
       {
-        id: 20,
-        title: "Exercise 20: Ingest Pipeline",
+        id: 21,
+        title: "Exercise 21: Ingest Pipeline",
         category: "Data Processing",
         description: `Define an ingest pipeline named <code>check-expensive</code> that uses a Painless script to set <code>is_expensive = true</code> if <code>price > 500</code>.`
-      },
-      {
-        id: 21,
-        title: "Exercise 21: Diagnose Shard Issues",
-        category: "Cluster Management",
-        description: `Check cluster health API, diagnose unassigned shards on the cluster, and reallocate or repair cluster health to green/yellow.`
       },
       {
         id: 22,

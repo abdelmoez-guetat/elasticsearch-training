@@ -1,4 +1,5 @@
 #!/bin/bash
+curl -s -X PUT "localhost:9200/unassigned_shard_demo" -H "Content-Type: application/json" -d '{"settings":{"number_of_shards":1,"number_of_replicas":10}}'
 cat <<-EOF | curl -H "Content-Type: application/json" -X POST --data-binary @- localhost:9200/product/_bulk | jq
 {"index":{ "_id": "P0"}}
 {"name":"Smartphone","description":"A handheld device that combines a mobile phone with computing functions.","category":"Electronics","price":599.99}

@@ -1,5 +1,16 @@
+## Cluster Management:
+### Exercise 1: Diagnose Shard Issues
+
+#### Question:
+Check cluster health API, diagnose unassigned shards on the cluster, and reallocate or repair cluster health to green.
+
+#### Topics Covered:
+* Cluster health
+* Shard allocation and repairs
+
+
 ## Data Management:
-### Exercise 1: Define an Index
+### Exercise 2: Define an Index
 
 #### Question:
 Create an index named `products` with a custom mapping where the `name`, `category`, and `description` fields are analyzed text fields, `price`, `stock` and `rating` are doubles.
@@ -10,7 +21,7 @@ Create an index named `products` with a custom mapping where the `name`, `catego
 * Data types for fields
 * Text analysis
 
-### Exercise 2: Define an Index Template
+### Exercise 3: Define an Index Template
 
 #### Question:
 Create an Elasticsearch index template for indices matching the pattern products-*. The template should include mappings and settings for these indices, specifying that:
@@ -28,7 +39,7 @@ Additionally, set the number_of_shards to 3 and the number_of_replicas to 1.
 * Mappings and settings
 
 
-### Exercise 3: Dynamic Templates
+### Exercise 4: Dynamic Templates
 
 #### Question:
 Create a dynamic template that applies to fields ending in _txt, treating them as analyzed text fields with custom analyzers.
@@ -38,7 +49,7 @@ Create a dynamic template that applies to fields ending in _txt, treating them a
 * Dynamic templates
 * Custom analyzers
 
-### Exercise 4: Index Lifecycle Management
+### Exercise 5: Index Lifecycle Management
 
 #### Question:
 Define an ILM policy for a time-series index (e.g., sales-*) with phases for hot, warm, and cold storage.
@@ -48,7 +59,7 @@ Define an ILM policy for a time-series index (e.g., sales-*) with phases for hot
 * Index Lifecycle Management (ILM)
 * Time-series index management
 
-### Exercise 5: Data Stream
+### Exercise 6: Data Stream
 
 #### Question:
 Create an index template that uses a data stream for real-time ingestion of data (e.g., order data). The index template should have appropriate mappings.
@@ -60,7 +71,7 @@ Create an index template that uses a data stream for real-time ingestion of data
 
 
 ## Searching Data:
-### Exercise 6: Basic Search Query
+### Exercise 7: Basic Search Query
 
 #### Question:
 Write a query to search for products that have the term "electronics" in the category field.
@@ -71,7 +82,7 @@ Write a query to search for products that have the term "electronics" in the cat
 * Term matching
 
 
-### Exercise 7: Boolean Query
+### Exercise 8: Boolean Query
 
 #### Question:
 Create a search query that filters products with a rating of 4.0 or higher and a price between 100 and 1000.
@@ -82,7 +93,7 @@ Create a search query that filters products with a rating of 4.0 or higher and a
 * Range filters
 
 
-### Exercise 8: Asynchronous Search
+### Exercise 9: Asynchronous Search
 
 #### Question:
 Write and execute an asynchronous search to retrieve all products where the tags field contains the keyword "winter".
@@ -93,7 +104,7 @@ Write and execute an asynchronous search to retrieve all products where the tags
 * Tag-based search
 
 
-### Exercise 9: Aggregations
+### Exercise 10: Aggregations
 
 #### Question:
 Write a metric aggregation to calculate the average price of all products in the Electronics category.
@@ -103,7 +114,7 @@ Write a metric aggregation to calculate the average price of all products in the
 * Metric aggregations
 * Average calculations
 
-### Exercise 10: Sub-Aggregations
+### Exercise 11: Sub-Aggregations
 
 #### Question:
 Write a bucket aggregation to group products by category and calculate the average rating within each category.
@@ -113,7 +124,7 @@ Write a bucket aggregation to group products by category and calculate the avera
 * Bucket aggregations
 * Sub-aggregations
 
-### Exercise 11: Cross-Cluster Search
+### Exercise 12: Cross-Cluster Search
 
 #### Question:
 Write a search query that spans across multiple clusters to retrieve data from both the products index and a remote inventory index.
@@ -125,7 +136,7 @@ Write a search query that spans across multiple clusters to retrieve data from b
 
 
 ##  Developing Search Applications:
-### Exercise 12: Highlight Search Terms
+### Exercise 13: Highlight Search Terms
 
 #### Question:
 Execute a search query that highlights the term "laptop" in the description field.
@@ -136,7 +147,7 @@ Execute a search query that highlights the term "laptop" in the description fiel
 * Highlighting terms in results
 
 
-### Exercise 13: Sort Results
+### Exercise 14: Sort Results
 
 #### Question:
 Sort the products by price in ascending order and return the top 5 cheapest products.
@@ -147,7 +158,7 @@ Sort the products by price in ascending order and return the top 5 cheapest prod
 * Limiting result set
 
 
-### Exercise 14: Pagination
+### Exercise 15: Pagination
 
 #### Question:
 Implement pagination on the search results to retrieve 10 products at a time.
@@ -158,7 +169,7 @@ Implement pagination on the search results to retrieve 10 products at a time.
 * From/size parameters in Elasticsearch
 
 
-### Exercise 15: Index Aliases
+### Exercise 16: Index Aliases
 
 #### Question:
 Define an alias for the products index, such as current-products, and perform a search query using this alias.
@@ -169,7 +180,7 @@ Define an alias for the products index, such as current-products, and perform a 
 * Querying via aliases
 
 
-### Exercise 16: Search Template
+### Exercise 17: Search Template
 
 #### Question:
 Define a search template that allows for parameterized queries, where you can dynamically provide values like category or price range.
@@ -182,7 +193,7 @@ Define a search template that allows for parameterized queries, where you can dy
 
 
 ## Data Processing:
-### Exercise 17: Define a Mapping
+### Exercise 18: Define a Mapping
 
 #### Question:
 Create a mapping where the description field uses a custom analyzer to handle synonyms.
@@ -194,7 +205,7 @@ Create a mapping where the description field uses a custom analyzer to handle sy
 * Synonym handling
 
 
-### Exercise 18: Multi-fields
+### Exercise 19: Multi-fields
 
 #### Question:
 Define multi-fields for the name field, where one version is analyzed with a standard analyzer and another with a keyword analyzer.
@@ -205,7 +216,7 @@ Define multi-fields for the name field, where one version is analyzed with a sta
     Analyzers
 
 
-### Exercise 19: Reindexing
+### Exercise 20: Reindexing
 
 #### Question:
 Use the Reindex API to copy data from the old-products index to the new-products index.
@@ -217,7 +228,7 @@ Use the Reindex API to copy data from the old-products index to the new-products
 
 
 
-### Exercise 20: Ingest Pipeline
+### Exercise 21: Ingest Pipeline
 
 #### Question:
 Define an ingest pipeline that adds a field is_expensive based on the price of the product (e.g., true if price > 500), using Painless scripting.
@@ -228,18 +239,6 @@ Define an ingest pipeline that adds a field is_expensive based on the price of t
 * Painless scripting
 
 ## Cluster Management:
-### Exercise 21: Diagnose Shard Issues
-
-#### Question:
-Simulate a shard issue in a cluster and demonstrate how to repair the cluster’s health.
-
-#### Topics Covered:
-
-* Cluster health
-* Shard allocation and repairs
-
-
-
 ### Exercise 22: Backup and Restore
 
 #### Question:
